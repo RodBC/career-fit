@@ -83,12 +83,12 @@ Scrapers are **not** the moat.
 
 ## Next product milestones
 
-| Phase | Milestone |
-|-------|-----------|
-| A | Guided intake (profile form + resume upload) |
-| B | Applications + outreach tracker in UI |
-| C | First suggestion cards (gap → course/post/project) |
-| D | Network bridge objects |
+| Phase | Milestone | Status |
+|-------|-----------|--------|
+| A | Guided intake (profile form + resume upload) | ✅ local MVP |
+| B | Applications + outreach tracker in UI | next |
+| C | First suggestion cards (gap → course/post/project) | planned |
+| D | Network bridge objects | planned |
 
 ## Explicit non-goals (near term)
 

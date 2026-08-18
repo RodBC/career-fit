@@ -22,11 +22,12 @@ See `docs/ECOSYSTEM.md` for the full end-state; do not boil the ocean before the
 ## What exists now
 
 - Playbook: `playbook/angles.yaml`, `rewrite-rules.md`, `structure.md`  
-- Core Python: classify / tailor / render / outreach / recruiters / jobs  
-- API: FastAPI on `:8787` (`career-fit serve`)  
-- UI: Vite React on `:5173` (`web/`) — tailor workspace only  
+- Core Python: classify / tailor / render / outreach / recruiters / jobs / **intake**  
+- API: FastAPI on `:8787` — includes `/api/intake`, `/api/parse-resume`  
+- UI: Vite React on `:5173` — **guided intake wizard** + tailor workspace  
 - AI contract: `AGENTS.md`, `.cursor/rules/`, `.cursor/skills/`  
-- Product docs: `PRODUCT.md`, `ECOSYSTEM.md`, `entrep-transfer.md`, `sources.yaml`
+- Product docs: `PRODUCT.md`, `ECOSYSTEM.md`, `entrep-transfer.md`, `sources.yaml`  
+- **Code archaeology for AIs:** `docs/AI_BUILD_MAP.md` (commit layers, module map, where-to-edit)
 
 ## Decisions locked
 
@@ -38,22 +39,25 @@ See `docs/ECOSYSTEM.md` for the full end-state; do not boil the ocean before the
 | Paste-first job & recruiter intake | Same user outcome without red-tier harvesting |
 | Context must live in git | Chat is ephemeral; SaaS iteration needs memory |
 | Ecosystem after wedge | Tracker (B) before suggestion flood (C); UX stays calm |
+| Code archaeology in `AI_BUILD_MAP.md` | Agents extend ownership tables when adding layers — not chat archaeology |
+| Resume intake = rules-first text/YAML | No invented employers; PDF deferred |
 
 ## Active priorities (P0 → P2)
 
-1. **P0** Guided intake in UI (profile form + resume upload)  
+1. **P0** ~~Guided intake in UI~~ ✅ (form + resume paste; localStorage profile)  
 2. **P0** Keep context/skills discipline as default agent behavior  
 3. **P1** Import tagged profile from `curriculumn` corpus  
 4. **P1** Better JD normalizers (LinkedIn/Gupy/inHire paste)  
 5. **P1** Applications + outreach tracker (Phase B objects)  
-6. **P2** Suggestion cards from profile gaps (Phase C)  
-7. **P2** Optional LLM polish + interview prep  
-8. **Later** Network bridges; green-tier feeds; browser-assisted capture  
+6. **P1** Per-angle bullet tagging UI (intake currently copies facts to all angles)  
+7. **P2** Suggestion cards from profile gaps (Phase C)  
+8. **P2** Optional LLM polish + interview prep; PDF resume parse decision  
+9. **Later** Network bridges; green-tier feeds; browser-assisted capture  
 
 ## Open questions
 
 - Pricing exact numbers (Pro band $19–39 draft)  
-- Resume parse: LLM vs rules-first for PDF upload  
+- Resume parse: keep rules-first vs add optional LLM for PDF/messy pastes (still no inventing facts)  
 - Browser-extension assisted capture: private fork first?  
 - How aggressive should “Today” suggestions be (cap at 3?)  
 
@@ -80,6 +84,6 @@ When updating this file, keep sections above and add under **Last session**:
 ### Last session
 
 - Date: 2026-08-18  
-- Done: Expanded product/ecosystem vision (tracker, network, curriculum suggestions, UI/UX phases); updated AGENTS/README/PRODUCT/skill  
-- Blocked: none  
-- Next exact task: Guided profile + resume intake form in Vite UI  
+- Done: Guided intake — `intake.py`, `/api/intake` + `/api/parse-resume`, `Intake.tsx` wizard (5 steps), localStorage profile, AI_BUILD_MAP §4–5 updated  
+- Blocked: PDF resume parse deferred  
+- Next exact task: Phase B applications + outreach tracker objects (or per-angle tagging UI if wedge quality needs it first)  

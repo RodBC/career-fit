@@ -24,6 +24,8 @@ Follow `playbook/rewrite-rules.md` and `playbook/structure.md` strictly.
 3. `render` — md + latex  
 4. Optional LLM only via `prompts/tailor_cv.md` + rewrite rules  
 
+Full ownership map: `docs/AI_BUILD_MAP.md` §4. 
+
 ## Evals
 
 Run `career-fit eval` after changing keyword signals or angle definitions.

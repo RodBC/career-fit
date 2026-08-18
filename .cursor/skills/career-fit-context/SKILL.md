@@ -12,8 +12,9 @@ description: >-
 ## At session start
 
 1. Open and read `docs/context/CURRENT.md`  
-2. If the task is product/roadmap, also read `docs/PRODUCT.md`  
-3. If the task is systems/ingest, also read `docs/ARCHITECTURE.md` and `docs/entrep-transfer.md`  
+2. If the task touches code (modules, API, UI, playbook wiring), also read `docs/AI_BUILD_MAP.md`  
+3. If the task is product/roadmap, also read `docs/PRODUCT.md`  
+4. If the task is systems/ingest, also read `docs/ARCHITECTURE.md` and `docs/entrep-transfer.md`  
 
 ## During work
 
@@ -25,7 +26,8 @@ description: >-
 1. Update **Last updated** date on `docs/context/CURRENT.md`  
 2. Refresh **What exists now** / **Active priorities** if changed  
 3. Fill **Last session** (Done / Blocked / Next exact task)  
-4. Append a bullet list to `docs/context/log/YYYY-MM-DD.md` (create file if needed):
+4. If modules/routes/layers changed, update `docs/AI_BUILD_MAP.md`  
+5. Append a bullet list to `docs/context/log/YYYY-MM-DD.md` (create file if needed):
 
 ```markdown
 ## HH:MM — short title

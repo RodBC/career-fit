@@ -1,6 +1,7 @@
 # Architecture & critical path
 
-> AIs: also read `docs/context/CURRENT.md` and update it when this file’s priorities change.
+> AIs: also read `docs/context/CURRENT.md` and update it when this file’s priorities change.  
+> For **where code lives and why** (commit ledger, module ownership, extension cheat sheet), read [`docs/AI_BUILD_MAP.md`](AI_BUILD_MAP.md).
 
 ## Product thesis
 
@@ -14,14 +15,15 @@ The hard IP is already here: multi-angle resume reframing without AI smell. Ever
 
 | Priority | Build | Why |
 |----------|-------|-----|
-| **P0** | Guided intake (profile form + resume upload) | Ecosystem starts with a rich career graph |
+| **P0** | ~~Guided intake (profile form + resume upload)~~ ✅ | Ecosystem starts with a rich career graph |
 | **P0** | AI context discipline (`AGENTS.md` + `docs/context/`) | Multi-agent production speed |
 | **P1** | Import tagged profile from private corpus | Founder becomes power user |
 | **P1** | Job paste adapters (LinkedIn / Gupy / inHire **text**) | Normalize paste → fields |
+| **P1** | Per-angle bullet tagging after intake | Intake currently mirrors facts across angles |
 | **P1** | Applications + outreach tracker (Phase B) | Retention; career CRM |
 | **P1** | `JobSource` / `ContactSource` protocols | Entrep-style adapters; paste/CSV first |
 | **P2** | Suggestion engine cards (Phase C) | Courses, posts, projects, people, hackathons |
-| **P2** | Optional LLM polish + interview prep | After deterministic assemble is solid |
+| **P2** | Optional LLM polish + interview prep; PDF parse | After deterministic assemble is solid |
 | **Later** | Network bridges; green/yellow feeds; browser-assisted capture | Never red-tier LinkedIn harvest |
 
 Ecosystem map: `docs/ECOSYSTEM.md`. Source policy: `docs/sources.yaml`. Entrep review: `docs/entrep-transfer.md`.

@@ -30,6 +30,8 @@ class ContactSource(Protocol):
 
 Backends: `PasteSource` (done), `CsvSource` (done), later `LinkedInExportSource`, `BrowserAssistSource`.
 
+Ownership of `jobs.py` / `recruiters.py`: `docs/AI_BUILD_MAP.md` §4.
+
 ## Recruiter messaging
 
 Use `recruiters.py`: score titles, extract emails from **provided** text only, draft per-contact messages. User sends.

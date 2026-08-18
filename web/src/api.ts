@@ -25,6 +25,41 @@ export type Contact = {
   draft_message: string;
 };
 
+export type IntakePayload = {
+  identity: {
+    name: string;
+    email: string;
+    city?: string;
+    phone?: string;
+    linkedin?: string;
+    languages?: string;
+  };
+  career_tutoring: {
+    enjoyed_most?: string;
+    positive_differentials?: string;
+    improvement_areas?: string;
+    technical_knowledge?: string;
+    networking_notes?: string;
+    hates_doing?: string;
+    challenges_overcome?: string;
+  };
+  targets: {
+    roles_wanted?: string;
+    locales?: string[];
+    remote?: boolean;
+  };
+  resume_text?: string;
+  base_profile?: Profile | null;
+};
+
+export type IntakeResult = {
+  ok: boolean;
+  profile: Profile;
+  warnings: string[];
+  parsed_roles: number;
+  parsed_projects: number;
+};
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
@@ -94,6 +129,27 @@ export function recruiters(body: {
   );
 }
 
+export function submitIntake(body: IntakePayload) {
+  return api<IntakeResult>("/api/intake", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function parseResume(text: string) {
+  return api<{
+    summary: string;
+    skills: string[];
+    experience: unknown[];
+    projects: unknown[];
+    education: unknown[];
+    warnings: string[];
+  }>("/api/parse-resume", {
+    method: "POST",
+    body: JSON.stringify({ text }),
+  });
+}
+
 export async function uploadProfileYaml(file: File): Promise<Profile> {
   const fd = new FormData();
   fd.append("file", file);
@@ -101,4 +157,24 @@ export async function uploadProfileYaml(file: File): Promise<Profile> {
   if (!res.ok) throw new Error(await res.text());
   const data = (await res.json()) as { profile: Profile };
   return data.profile;
+}
+
+const STORAGE_KEY = "career-fit.profile.v1";
+
+export function loadStoredProfile(): Profile | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as Profile;
+  } catch {
+    return null;
+  }
+}
+
+export function storeProfile(profile: Profile | null) {
+  if (!profile) {
+    localStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
 }

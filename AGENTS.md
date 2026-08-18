@@ -5,15 +5,17 @@ You are building a **profitable SaaS**, not a scraper demo.
 ## Before you write code
 
 1. Read [`docs/context/CURRENT.md`](docs/context/CURRENT.md)  
-2. Read [`docs/PRODUCT.md`](docs/PRODUCT.md) if the task touches product scope  
-3. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) if the task touches system design  
-4. Skim the relevant skill under [`.cursor/skills/`](.cursor/skills/)
+2. Read [`docs/AI_BUILD_MAP.md`](docs/AI_BUILD_MAP.md) if the task touches code layout, modules, API, or UI — *how / where / why* what already exists  
+3. Read [`docs/PRODUCT.md`](docs/PRODUCT.md) if the task touches product scope  
+4. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) if the task touches system design  
+5. Skim the relevant skill under [`.cursor/skills/`](.cursor/skills/)
 
 ## After you finish meaningful work
 
 1. Update [`docs/context/CURRENT.md`](docs/context/CURRENT.md) (status, decisions, next)  
 2. Append a short entry to `docs/context/log/YYYY-MM-DD.md` (create if missing)  
-3. If you introduced a durable convention, encode it in a skill or `.cursor/rules/` — do not leave it only in chat
+3. If you added modules, routes, or layers, update [`docs/AI_BUILD_MAP.md`](docs/AI_BUILD_MAP.md) (§1 ledger + ownership tables)  
+4. If you introduced a durable convention, encode it in a skill or `.cursor/rules/` — do not leave it only in chat
 
 **Chat is ephemeral. Repo context is the source of truth.**
 

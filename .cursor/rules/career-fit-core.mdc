@@ -11,8 +11,10 @@ You are working on **Career Fit**, a SaaS for high-signal job reach-out.
 
 1. **Read** `docs/context/CURRENT.md` before non-trivial work.  
 2. **Follow** `AGENTS.md`.  
-3. **Update** `docs/context/CURRENT.md` and append `docs/context/log/YYYY-MM-DD.md` when you change product state, architecture, or priorities.  
-4. Chat is not durable memory. If it matters, write it to the repo.
+3. For code work, read `docs/AI_BUILD_MAP.md` (how / where / why existing layers).  
+4. **Update** `docs/context/CURRENT.md` and append `docs/context/log/YYYY-MM-DD.md` when you change product state, architecture, or priorities.  
+5. After new modules/routes/layers, update `docs/AI_BUILD_MAP.md`.  
+6. Chat is not durable memory. If it matters, write it to the repo.
 
 ## North star
 

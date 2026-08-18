@@ -31,6 +31,7 @@ We productize the craft **and** the ongoing operating rhythm.
 |------------|--------|
 | Multi-angle resume playbook (ops / frontend / backend / data / GTM / sales eng) | ✅ |
 | Deterministic tailor (no LLM required) | ✅ |
+| Guided profile + resume intake (rules-first) | ✅ |
 | Recruiter paste → ranked contacts + DM/email drafts | ✅ |
 | Vite UI + FastAPI | ✅ |
 | Career CRM + suggestion engine | 🧭 planned (`docs/ECOSYSTEM.md`) |
@@ -56,6 +57,7 @@ cd web && npm i && npm run dev   # UI :5173
 |-----|---------|
 | [`AGENTS.md`](AGENTS.md) | Mandatory AI operating contract |
 | [`docs/context/CURRENT.md`](docs/context/CURRENT.md) | Live product state — **read first, update last** |
+| [`docs/AI_BUILD_MAP.md`](docs/AI_BUILD_MAP.md) | Commit ledger + file/module ownership — **how / where / why** |
 | [`docs/PRODUCT.md`](docs/PRODUCT.md) | SaaS vision, tiers, moat |
 | [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) | Tracker + coach + UI/UX end-state |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Build order & technical constraints |

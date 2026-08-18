@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from .angle import classify_angle
+from .intake import build_profile_from_intake, parse_resume_text
 from .jobs import parse_job_text
 from .models import ROOT, Job, load_yaml
 from .outreach import build_outreach
@@ -20,7 +21,7 @@ from .recruiters import (
 from .render import render_latex, render_markdown
 from .tailor import tailor
 
-app = FastAPI(title="Career Fit API", version="0.2.0")
+app = FastAPI(title="Career Fit API", version="0.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,6 +53,18 @@ class RecruitersRequest(BaseModel):
     contacts_text: str = ""
     angle: str | None = None
     locale: str | None = None
+
+
+class IntakeRequest(BaseModel):
+    identity: dict[str, Any] = {}
+    career_tutoring: dict[str, Any] = {}
+    targets: dict[str, Any] = {}
+    resume_text: str = ""
+    base_profile: dict[str, Any] | None = None
+
+
+class ParseResumeRequest(BaseModel):
+    text: str = ""
 
 
 def _default_profile() -> dict[str, Any]:
@@ -189,6 +202,43 @@ async def upload_profile(file: UploadFile = File(...)) -> dict[str, Any]:
     if "identity" not in data:
         raise HTTPException(400, "Profile needs an identity block")
     return {"ok": True, "profile": data}
+
+
+@app.post("/api/parse-resume")
+def api_parse_resume(req: ParseResumeRequest) -> dict[str, Any]:
+    if not req.text.strip():
+        raise HTTPException(400, "resume text required")
+    parsed = parse_resume_text(req.text)
+    return {
+        "summary": parsed.summary,
+        "skills": parsed.skills,
+        "experience": parsed.experience,
+        "projects": parsed.projects,
+        "education": parsed.education,
+        "warnings": parsed.warnings,
+    }
+
+
+@app.post("/api/intake")
+def api_intake(req: IntakeRequest) -> dict[str, Any]:
+    try:
+        profile = build_profile_from_intake(
+            identity=req.identity,
+            career_tutoring=req.career_tutoring,
+            targets=req.targets,
+            resume_text=req.resume_text,
+            base_profile=req.base_profile,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    meta = profile.get("intake_meta") or {}
+    return {
+        "ok": True,
+        "profile": profile,
+        "warnings": meta.get("resume_warnings") or [],
+        "parsed_roles": meta.get("parsed_roles", 0),
+        "parsed_projects": meta.get("parsed_projects", 0),
+    }
 
 
 def run() -> None:
