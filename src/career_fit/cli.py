@@ -6,8 +6,10 @@ import sys
 from pathlib import Path
 
 from .angle import classify_angle
+from .jobs import parse_job_text
 from .models import ROOT, Job, load_yaml
 from .outreach import build_outreach
+from .recruiters import contacts_as_dicts, enrich_with_messages, parse_contacts_csv, parse_contacts_text
 from .render import render_latex, render_markdown
 from .tailor import tailor
 
@@ -100,6 +102,46 @@ def cmd_fit_brief(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_serve(_: argparse.Namespace) -> int:
+    from .api import run
+
+    run()
+    return 0
+
+
+def cmd_recruiters(args: argparse.Namespace) -> int:
+    profile = load_yaml(_resolve_profile(args.profile))
+    raw_job = Path(args.job_file).read_text(encoding="utf-8") if args.job_file else args.description or ""
+    parsed = parse_job_text(raw_job) if raw_job else None
+    job = Job(
+        title=args.title or (parsed.title if parsed else ""),
+        company=args.company or (parsed.company if parsed else ""),
+        description=raw_job or args.description or "",
+        locale=args.locale or "en",
+    )
+    angle = args.angle or classify_angle(job).angle
+    resume = tailor(profile, job, angle)
+    contacts_raw = Path(args.contacts).read_text(encoding="utf-8")
+    if contacts_raw.lower().lstrip().startswith("name,"):
+        contacts = parse_contacts_csv(contacts_raw, company=job.company)
+    else:
+        contacts = parse_contacts_text(contacts_raw, company=job.company)
+    proof = ""
+    if resume.projects and resume.projects[0].get("bullets"):
+        proof = f"{resume.projects[0]['name']}: {resume.projects[0]['bullets'][0]}"
+    contacts = enrich_with_messages(
+        contacts,
+        candidate_name=profile.get("identity", {}).get("name", ""),
+        job_title=job.title,
+        company=job.company or "the company",
+        angle_summary=resume.summary,
+        proof_line=f"One proof point — {proof}" if proof else "",
+        locale=job.locale,
+    )
+    print(json.dumps({"angle": angle, "contacts": contacts_as_dicts(contacts)}, indent=2, ensure_ascii=False))
+    return 0
+
+
 def yaml_dump(obj: object) -> str:
     import yaml
 
@@ -132,6 +174,20 @@ def main(argv: list[str] | None = None) -> int:
     p_f = sub.add_parser("profile", help="Show tutoring/fit brief from profile")
     p_f.add_argument("--profile", default=None)
     p_f.set_defaults(func=cmd_fit_brief)
+
+    p_s = sub.add_parser("serve", help="Run local API for the Vite UI (port 8787)")
+    p_s.set_defaults(func=cmd_serve)
+
+    p_r = sub.add_parser("recruiters", help="Parse pasted contacts + draft messages")
+    p_r.add_argument("--contacts", required=True, help="Path to pasted profiles or CSV")
+    p_r.add_argument("--title", default="")
+    p_r.add_argument("--company", default="")
+    p_r.add_argument("--description", default="")
+    p_r.add_argument("--job-file", default=None)
+    p_r.add_argument("--locale", default="en")
+    p_r.add_argument("--angle", default=None)
+    p_r.add_argument("--profile", default=None)
+    p_r.set_defaults(func=cmd_recruiters)
 
     args = parser.parse_args(argv)
     return args.func(args)

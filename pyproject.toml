@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "career-fit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Profile → angle → tailored CV + outreach. Playbook extracted from real multi-angle resume corpus."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,6 +12,9 @@ license = { text = "MIT" }
 authors = [{ name = "Career Fit contributors" }]
 dependencies = [
   "PyYAML>=6.0",
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
@@ -19,6 +22,7 @@ dev = ["pytest>=7.0"]
 
 [project.scripts]
 career-fit = "career_fit.cli:main"
+career-fit-api = "career_fit.api:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]
