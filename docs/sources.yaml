@@ -1,0 +1,50 @@
+# Job & contact sources — policy tiers
+# green = official/open or user-owned export
+# yellow = public page / paste-assisted; careful rate limits; no login bypass
+# red = aggressive anti-bot or ToS-hostile automation — do not ship in public core
+
+sources:
+  user_paste_jd:
+    tier: green
+    notes: "Primary path. LinkedIn/Gupy/inHire/anywhere text pasted by user."
+    enabled: true
+
+  user_paste_contacts:
+    tier: green
+    notes: "Recruiter/HM cards + About pasted by user. Emails extracted from provided text only."
+    enabled: true
+
+  user_csv_contacts:
+    tier: green
+    notes: "CSV columns name,title,about,email,linkedin"
+    enabled: true
+
+  linkedin_data_export:
+    tier: green
+    notes: "Official LinkedIn member data export uploaded by user. Parse locally. Never scrape."
+    enabled: false
+
+  gupy_public_job:
+    tier: yellow
+    notes: "Public job posting pages may be fetchable later. Prefer paste until adapter exists."
+    enabled: false
+
+  inhire_public_job:
+    tier: yellow
+    notes: "Same as Gupy — paste first."
+    enabled: false
+
+  linkedin_jobs_api:
+    tier: green
+    notes: "Only via official partner/API programs if/when available."
+    enabled: false
+
+  linkedin_automated_scrape:
+    tier: red
+    notes: "ToS + ban risk + fragility. Explicitly forbidden in public Career Fit core."
+    enabled: false
+
+  browser_assisted_capture:
+    tier: yellow
+    notes: "User-logged browser extension they trigger. Private/experimental fork first."
+    enabled: false

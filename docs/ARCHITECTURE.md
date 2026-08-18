@@ -1,24 +1,30 @@
 # Architecture & critical path
 
+> AIs: also read `docs/context/CURRENT.md` and update it when this file’s priorities change.
+
 ## Product thesis
 
 Mass apply loses. The loop that works:
 
 **job → decision-maker → tailored CV → short message → (later) interview tutoring**
 
-The hard IP is already here: multi-angle resume reframing without AI smell. Everything else is distribution and UX.
+The hard IP is already here: multi-angle resume reframing without AI smell. Everything else is distribution and UX. We are building a **profitable SaaS** around that loop (`docs/PRODUCT.md`).
 
 ## What to build next (ordered)
 
 | Priority | Build | Why |
 |----------|-------|-----|
-| **P0** | Web UI (Vite) + local API | Without this, only you can use the CLI. Upload profile + paste JD → CV/message is the wedge. |
-| **P0** | Recruiter **intake** + message drafts | Reach-out is the conversion step. Users can paste names/titles/About today. |
-| **P1** | Deep profile form (tutoring fields) | Improves fit and tone; not required for first tailored CV. |
-| **P1** | Job paste adapters (LinkedIn / Gupy / inHire **text**) | Normalize pasted JD HTML/text → title/company/description. No login bypass. |
-| **P2** | Optional LLM polish | Only after deterministic assemble is solid. |
-| **P2** | Interview prep generator | Tutoring layer; after outreach works. |
-| **Later** | Job discovery feeds | Useful, but secondary to tailor + reach-out quality. |
+| **P0** | Profile form in Vite (no YAML required) | Remove power-user friction |
+| **P0** | AI context discipline (`AGENTS.md` + `docs/context/`) | Multi-agent production speed |
+| **P1** | Import tagged profile from private corpus | Founder becomes power user |
+| **P1** | Job paste adapters (LinkedIn / Gupy / inHire **text**) | Normalize paste → fields |
+| **P1** | `JobSource` / `ContactSource` protocols | Entrep-style adapters; paste/CSV first |
+| **P2** | Optional LLM polish | After deterministic assemble is solid |
+| **P2** | Interview prep generator | Tutoring layer |
+| **Later** | Green/yellow feeds; browser-assisted capture | Never red-tier LinkedIn harvest |
+
+Source policy: `docs/sources.yaml`. Entrep review: `docs/entrep-transfer.md`.
+
 
 ## LinkedIn scraping — critical take
 

@@ -1,0 +1,33 @@
+---
+description: Career Fit AI contract — always read/update docs/context; SaaS north star; no LinkedIn harvesters
+alwaysApply: true
+---
+
+# Career Fit — always on
+
+You are working on **Career Fit**, a SaaS for high-signal job reach-out.
+
+## Mandatory context loop
+
+1. **Read** `docs/context/CURRENT.md` before non-trivial work.  
+2. **Follow** `AGENTS.md`.  
+3. **Update** `docs/context/CURRENT.md` and append `docs/context/log/YYYY-MM-DD.md` when you change product state, architecture, or priorities.  
+4. Chat is not durable memory. If it matters, write it to the repo.
+
+## North star
+
+`profile → job → angle → tailored CV → decision-maker message → (later) interview tutoring`
+
+Do not build features outside this loop unless the user explicitly expands scope.
+
+## Hard bans
+
+- Automated LinkedIn scraping/harvesting in this public repo  
+- Inventing resume facts  
+- Mass-sending messages on the user’s behalf from our servers  
+
+## Prefer
+
+- Deterministic tailor + playbook rules  
+- Paste/CSV/green-tier sources (`docs/sources.yaml`)  
+- Small conventional commits  

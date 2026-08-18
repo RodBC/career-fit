@@ -1,75 +1,57 @@
 # Career Fit
 
-**Profile → angle → tailored CV + recruiter outreach drafts.**
+**We help ambitious candidates get interviews by reaching decision-makers with a credible, tailored resume — not by spamming Easy Apply.**
 
-Open-source core of a career pipeline that worked in practice: reaching decision-makers beats mass applications. This repo packages the hard-won part — how to reframe the *same* biography for different roles **without** smelling like AI wrote it for that JD — plus a local web UI.
+Career Fit is a SaaS product. The wedge is simple and proven in practice:
 
-## Critical stance (read this)
+1. Capture who you are (deep profile)  
+2. Lock onto a role  
+3. Produce a **non-AI-smelling** tailored CV (LaTeX)  
+4. Draft short messages to recruiters / hiring managers  
+5. You send. We do not spray.
 
-**We do not ship automated LinkedIn scrapers** in the public core. They violate LinkedIn ToS, get accounts banned, break constantly, and are not the product moat. Gupy/inHire are useful as **paste sources** for job text.
+Everything we build either strengthens that loop or is cut.
 
-What users do instead (same outcome, durable product):
+## The problem we solve
 
-1. Paste the JD (LinkedIn / Gupy / inHire / anywhere)  
-2. Generate tailored CV + company message  
-3. Paste recruiter / hiring-manager profile text (or CSV) from LinkedIn people search  
-4. Get ranked contacts + DM/email drafts — **you send manually**
+Mass applications lose. Personalized reach-out wins — but doing it by hand does not scale, and generic AI CVs get ignored.
 
-Details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+We productize the craft: **same biography, different angle**, plus outreach that sounds human.
 
-## Quick start (UI)
+## What ships today (local MVP)
+
+| Capability | Status |
+|------------|--------|
+| Multi-angle resume playbook (ops / frontend / backend / data / GTM / sales eng) | ✅ |
+| Deterministic tailor (no LLM required) | ✅ |
+| Recruiter paste → ranked contacts + DM/email drafts | ✅ |
+| Vite UI + FastAPI | ✅ |
+| Automated LinkedIn scraping | ❌ by design (see below) |
 
 ```bash
-cd career-fit
 python -m venv .venv && source .venv/bin/activate
 pip install -e .
-
-# terminal 1 — API
-career-fit serve
-
-# terminal 2 — Vite UI
-cd web && npm install && npm run dev
+career-fit serve          # API :8787
+cd web && npm i && npm run dev   # UI :5173
 ```
 
-Open http://localhost:5173 — upload profile YAML, paste job, generate, then paste recruiters.
+## Non-negotiables
 
-## CLI
+- **Moat = playbook quality**, not scrapers.  
+- **No headless LinkedIn harvester** in the public product. Paste / user-assisted capture / official APIs only.  
+- **You send the message** — quality over spray.  
+- **AIs working on this repo must read and update context** — see [`AGENTS.md`](AGENTS.md).
 
-```bash
-career-fit classify --title "GTM Engineer" --description "HubSpot Salesforce funnel CRM"
-career-fit tailor --title "Content Engineer" --company ExampleCo --description "..." --locale en
-career-fit recruiters --contacts corpus/examples/recruiters-paste.txt --title "Content Engineer" --company ExampleCo
-career-fit eval
-career-fit profile
-```
+## Docs map (start here if you are an AI)
 
-## Layout
-
-| Path | Purpose |
-|------|---------|
-| `playbook/` | Angles, rewrite rules, CV skeleton |
-| `corpus/examples/` | Sanitized patterns + sample recruiter paste |
-| `profile/` | Schema + fictional example |
-| `prompts/` | LLM prompts (optional polish later) |
-| `evals/` | Classification regression |
-| `src/career_fit/` | Core + FastAPI (`api.py`) + recruiters/jobs parsers |
-| `web/` | Vite + React UI |
-| `docs/ARCHITECTURE.md` | What to build next and why |
-
-### Performance idea
-
-1. Classify **angle** (deterministic)  
-2. Select pre-tagged profile bullets  
-3. Render MD + LaTeX  
-4. Optional LLM polish later  
-
-## Private profile
-
-```bash
-cp profile/example.profile.yaml data/profile.yaml
-```
-
-`data/profile.yaml` is gitignored.
+| Doc | Purpose |
+|-----|---------|
+| [`AGENTS.md`](AGENTS.md) | Mandatory AI operating contract |
+| [`docs/context/CURRENT.md`](docs/context/CURRENT.md) | Live product state — **read first, update last** |
+| [`docs/PRODUCT.md`](docs/PRODUCT.md) | SaaS vision, tiers, moat |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Build order & technical constraints |
+| [`docs/entrep-transfer.md`](docs/entrep-transfer.md) | What we reuse (and reject) from `/entrep` |
+| [`playbook/`](playbook/) | Angle IP & anti-AI-smell rules |
 
 ## License
 
