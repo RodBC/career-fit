@@ -20,7 +20,7 @@ History is short and intentional. Treat each commit as a **layer**, not a random
 | `f613de8` | `docs: decisive product framing and mandatory AI context loop` | **Agent operating system** | Force every AI to read/write durable SaaS state (`AGENTS.md`, `CURRENT.md`, skills, source tiers). Stop chat-only memory. |
 | `f89082d` | `docs: lock ecosystem vision for career CRM and coach loop` | **North-star expansion** | Document Phase B/C (tracker + suggestions) so agents plan retention without boiling the ocean before the wedge converts. |
 | `92c8048` | `feat: guided profile intake and AI build map` | **Phase A intake** | Form + rules-first resume parse → tailor-ready profile; `AI_BUILD_MAP` for agents. |
-| *(pending)* | `feat: Home shell, pipeline tracker, soft Pro gates` | **Phase B + soft monetization** | App shell Home/Intake/Craft; applications/outreach localStorage; Today cards; Free limits; Pro $29. |
+| `ec9cfcd` | `feat: Home shell, pipeline tracker, and soft Pro gates` | **Phase B + soft monetization** | App shell Home/Intake/Craft; applications/outreach localStorage; Today cards; Free limits; Pro $29. |
 
 **Invariant across all layers:** paste/CSV intake · deterministic tailor first · user sends messages · no LinkedIn harvester in public core.
 
