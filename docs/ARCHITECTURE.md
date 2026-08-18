@@ -14,16 +14,18 @@ The hard IP is already here: multi-angle resume reframing without AI smell. Ever
 
 | Priority | Build | Why |
 |----------|-------|-----|
-| **P0** | Profile form in Vite (no YAML required) | Remove power-user friction |
+| **P0** | Guided intake (profile form + resume upload) | Ecosystem starts with a rich career graph |
 | **P0** | AI context discipline (`AGENTS.md` + `docs/context/`) | Multi-agent production speed |
 | **P1** | Import tagged profile from private corpus | Founder becomes power user |
 | **P1** | Job paste adapters (LinkedIn / Gupy / inHire **text**) | Normalize paste → fields |
+| **P1** | Applications + outreach tracker (Phase B) | Retention; career CRM |
 | **P1** | `JobSource` / `ContactSource` protocols | Entrep-style adapters; paste/CSV first |
-| **P2** | Optional LLM polish | After deterministic assemble is solid |
-| **P2** | Interview prep generator | Tutoring layer |
-| **Later** | Green/yellow feeds; browser-assisted capture | Never red-tier LinkedIn harvest |
+| **P2** | Suggestion engine cards (Phase C) | Courses, posts, projects, people, hackathons |
+| **P2** | Optional LLM polish + interview prep | After deterministic assemble is solid |
+| **Later** | Network bridges; green/yellow feeds; browser-assisted capture | Never red-tier LinkedIn harvest |
 
-Source policy: `docs/sources.yaml`. Entrep review: `docs/entrep-transfer.md`.
+Ecosystem map: `docs/ECOSYSTEM.md`. Source policy: `docs/sources.yaml`. Entrep review: `docs/entrep-transfer.md`.
+
 
 
 ## LinkedIn scraping — critical take

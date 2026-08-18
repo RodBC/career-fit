@@ -10,7 +10,7 @@ description: >-
 
 ## Aim
 
-Profitable SaaS that sells **interview leverage**: tailored CV + human outreach drafts grounded in a deep profile.
+Profitable SaaS: **career OS** with a sharp wedge — tailored CV + human outreach drafts — then retention via tracker + suggestion coach. See `docs/ECOSYSTEM.md`.
 
 ## Decision test
 
@@ -19,19 +19,22 @@ Ship only if it improves at least one:
 1. Time-to-first credible tailored CV  
 2. Quality / reply rate of outreach  
 3. Willingness to pay (Pro/Team)  
-4. Retention (tracker, tutoring, outcomes)
+4. Retention (tracker, suggestions, tutoring, outcomes)  
+5. Clarity of “what should I do next?” (coach UX)
 
 ## Moat order
 
 1. Angle playbook + anti-AI-smell  
-2. Outcome data over time  
-3. User-owned network exports  
-4. Trust (no account-burning scrapers)
+2. Career graph + longitudinal outcomes  
+3. Tracker / switching cost  
+4. User-owned network exports  
+5. Trust (no account-burning scrapers)
 
 ## Default answers
 
 - LinkedIn auto-scrape? **No** in public core.  
-- Auto-send DMs? **No**.  
+- Auto-send DMs / auto-post? **No** — draft + track only.  
+- Full suggestion engine before tracker? **No** — Phase B before C.  
 - More job boards? **Paste adapters first**; green/yellow only per `docs/sources.yaml`.  
 
-Read `docs/PRODUCT.md` before changing tiers or positioning.
+Read `docs/PRODUCT.md` + `docs/ECOSYSTEM.md` before changing tiers or positioning.

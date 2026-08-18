@@ -20,10 +20,15 @@ You are building a **profitable SaaS**, not a scraper demo.
 ## Product north star
 
 ```
-profile → job → angle → tailored CV → decision-maker message → (later) interview tutoring
+intake (profile + resume)
+  → job → angle → tailored CV → decision-maker message
+  → track applications / people / network
+  → suggest growth (courses, posts, projects, hackathons, contacts)
+  → interview tutoring
 ```
 
-If a feature does not tighten this loop or increase willingness to pay, do not build it.
+Wedge first (`docs/PRODUCT.md`). Ecosystem map (`docs/ECOSYSTEM.md`).  
+If a feature does not tighten this path or increase willingness to pay, do not build it.
 
 ## Hard bans
 

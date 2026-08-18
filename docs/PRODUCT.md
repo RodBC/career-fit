@@ -1,17 +1,33 @@
 # Career Fit — Product
 
-**One-liner:** The operating system for high-signal job reach-out — tailored CV + decision-maker drafts, grounded in who you actually are.
+**One-liner:** A career operating system — start with high-signal reach-out (tailored CV + decision-maker drafts), then keep advancing the candidate with a tracker and a coach that suggests what to do next.
 
 ## Vision
 
-Career Fit becomes the default coach+toolkit for candidates who refuse Easy Apply roulette. Users describe themselves once; the product continuously finds fit, reframes proof, and prepares human outreach.
+Career Fit is the default workspace for candidates who refuse Easy Apply roulette.
+
+**Day one:** the user dumps everything — deep self-profile **and** current resume. We structure it into a career graph.
+
+**Every day after:** we help them track applications, people they’ve reached, network bridges, and curriculum progress — and we keep suggesting sharp next moves: recruiters to contact, people who can help, LinkedIn post topics, courses, hackathons, projects to build.
 
 At scale this is not “AI resume writer.” It is:
 
-- **Career graph** — skills, preferences, hates, wins, network bridges  
-- **Fit engine** — roles matched to that graph  
-- **Artifact factory** — CV, messages, interview briefs that do not smell generated  
-- **Workflow** — track applications, contacts, replies  
+- **Career graph** — skills, preferences, hates, wins, goals, resume facts  
+- **Fit + artifact factory** — angled CVs, messages, interview briefs without AI smell  
+- **Career CRM** — applied jobs, outreach, replies, network helpers  
+- **Growth coach** — continuous suggestions that close gaps and create signal  
+- **Friendly product** — guided UI/UX, progressive onboarding, calm home screen (see `docs/ECOSYSTEM.md`)
+
+## Wedge → ecosystem
+
+```
+intake (profile + resume)
+    → tailor + reach-out          ← wedge / pay proof
+    → track applications & people ← retention
+    → suggest growth & network    ← daily habit / moat
+```
+
+Do not build the full ecosystem before the wedge converts. Full map: [`docs/ECOSYSTEM.md`](ECOSYSTEM.md).
 
 ## Why this wins money
 
@@ -20,50 +36,63 @@ At scale this is not “AI resume writer.” It is:
 | Applications vanish into ATS void | Reach humans with credible artifacts | Paid seat when outreach volume matters |
 | AI CVs sound fake | Playbook fine-tuned on real multi-angle corpus | Quality is the upgrade |
 | Finding the right recruiter is tedious | Rank + draft from contacts the user provides (later: assisted capture) | Time saved = subscription |
+| “What should I do this week?” | Suggestion engine tied to gaps + active pipeline | Habit → Pro retention |
+| Lost track of who I messaged | Career CRM (jobs, recruiters, network) | Switching cost |
 | Interview panic | Tutoring briefs mapped to role + interviewer | Upsell pack |
 
 ## Tiers (draft)
 
 ### Free — Prove it
 
-- 1 profile  
+- 1 profile + resume intake  
 - 3 tailored CVs / month  
 - Paste-based recruiter drafts  
-- Watermark optional on LaTeX  
+- Light application list (limited)  
 
-**Purpose:** acquisition; let the CV quality sell itself.
+**Purpose:** acquisition; CV quality sells itself.
 
 ### Pro — $19–39/mo (TBD)
 
 - Unlimited tailor  
-- Deep tutoring intake  
-- Job paste normalizers (LinkedIn/Gupy/inHire text)  
-- Application tracker  
+- Full career CRM (applications, outreach, network notes)  
+- Suggestion engine (courses, posts, projects, people, hackathons)  
+- Job paste normalizers  
 - Interview prep generator  
 
 ### Team / Coach — higher
 
 - Multi-profile (career coaches, bootcamps)  
-- Shared playbooks  
+- Shared pipelines + curriculum paths  
 - White-label exports  
 
 ## Moat (in priority order)
 
 1. **Angle playbook + anti-AI-smell craft** (already in repo)  
-2. Longitudinal outcomes (what angles convert for which role types)  
-3. Network / warm-path suggestions from user-owned LinkedIn exports  
-4. Brand trust: we do not burn user accounts with reckless scraping  
+2. Longitudinal outcomes (what angles/suggestions convert)  
+3. Career graph + tracker data (personal switching cost)  
+4. Network / warm-path suggestions from user-owned exports  
+5. Brand trust: we do not burn user accounts with reckless scraping  
 
-Scrapers are **not** the moat. Treat them as optional infrastructure behind green/yellow source tiers.
+Scrapers are **not** the moat.
 
-## Exit criteria for current MVP
+## Exit criteria for current MVP (Phase A)
 
 - User can upload profile + paste JD → download `.tex` / `.md` + message in <2 minutes  
 - User can paste 3 recruiters → get ranked drafts  
 - AI agents consistently update `docs/context/` without being reminded twice  
 
-## Explicit non-goals (6 months)
+## Next product milestones
 
-- Becoming a LinkedIn growth-hacking tool  
-- Auto-apply bots  
-- Competing with LinkedIn Recruiter for sourcing enterprises  
+| Phase | Milestone |
+|-------|-----------|
+| A | Guided intake (profile form + resume upload) |
+| B | Applications + outreach tracker in UI |
+| C | First suggestion cards (gap → course/post/project) |
+| D | Network bridge objects |
+
+## Explicit non-goals (near term)
+
+- Becoming a LinkedIn growth-hacking / auto-post tool  
+- Auto-apply or auto-DM bots  
+- Competing with LinkedIn Recruiter for enterprise sourcing  
+- Boiling the ocean UI before wedge retention exists  
