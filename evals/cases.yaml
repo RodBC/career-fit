@@ -1,0 +1,45 @@
+# Eval cases — derived from corpus patterns. Run: python -m career_fit eval
+
+cases:
+  - id: classify_ops
+    job: >
+      Content Engineer — keep a high-volume publishing pipeline healthy.
+      Daily monitoring, QA before scale, escalate account issues, automate repetitive checks.
+    expect_angle: ops
+
+  - id: classify_frontend
+    job: >
+      Desenvolvedor Front-end Pleno — React, TypeScript, componentes reutilizáveis,
+      APIs REST, Jest, Next.js, squad ágil.
+    expect_angle: frontend
+
+  - id: classify_backend
+    job: >
+      Backend Engineer — Python, FastAPI, REST APIs, SQL, async jobs, AWS production.
+    expect_angle: backend
+
+  - id: classify_data
+    job: >
+      Data Platform Engineer — pipelines, SQL modeling, Databricks, staging/gold layers,
+      job observability.
+    expect_angle: data
+
+  - id: classify_gtm
+    job: >
+      GTM Engineer — HubSpot, Salesforce, Braze, funnel metrics, CRM hygiene, automations.
+    expect_angle: gtm
+
+  - id: classify_sales_eng
+    job: >
+      Sales Engineer — discovery calls, demos, POC support, translate requirements into
+      CRM/integration solutions for B2B SaaS.
+    expect_angle: sales_eng
+
+  - id: tailor_no_invention
+    check: >
+      Given profile facts only, tailored bullets must not introduce employers or tools
+      absent from profile. Angle = backend.
+
+  - id: outreach_length
+    check: >
+      Outreach body before signature should be under ~120 words and include one project proof.

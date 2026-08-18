@@ -1,0 +1,34 @@
+# Profile schema (conceptual). Validated lightly in code.
+
+identity:
+  description: Public contact block for CV header and outreach signature.
+  required: [name, email]
+  fields: [name, city, phone, email, linkedin, languages]
+
+career_tutoring:
+  description: >
+    Deep intake used for job fit, messaging tone, and tutoring.
+    This is the platform layer beyond "paste a JD".
+  fields:
+    enjoyed_most: list[str]
+    positive_differentials: list[str]
+    improvement_areas: list[str]
+    technical_knowledge: list[str]
+    networking_notes: list[str]
+    hates_doing: list[str]
+    challenges_overcome: list[str]
+
+targets:
+  description: What to optimize matching for.
+  fields: [roles_wanted, locales, remote]
+
+facts:
+  description: Immutable career facts. Tailoring only selects/rephrases via bullets_by_angle.
+  experience[].bullets_by_angle: map[angle -> list[str]]
+  projects[].bullets_by_angle: map[angle -> list[str]]
+
+summaries_by_angle:
+  description: Pre-baked summaries per angle/locale (prefer these over free generation).
+
+skills_by_angle:
+  description: Pre-baked skill buckets per angle.

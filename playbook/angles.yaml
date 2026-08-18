@@ -1,0 +1,183 @@
+# Role angles extracted from a real multi-resume corpus.
+# Same biography → different lens. Never invent employers/dates; reframe emphasis.
+
+angles:
+  ops:
+    label: Operations / Content Ops / Pipeline Ops
+    summary_lens: ownership of high-volume workflows, QA before scale, escalation, automation of repetitive work
+    skill_buckets:
+      - Content & pipeline operations
+      - Quality assurance
+      - Automation & tooling
+      - Reporting & metrics
+      - Collaboration
+    keyword_signals:
+      - operations
+      - content engineer
+      - pipeline
+      - monitoring
+      - qa
+      - quality
+      - publishing
+      - workflow
+      - escalation
+      - sla
+      - on-call
+    experience_emphasis:
+      - daily monitoring / exception handling
+      - catch-before-scale validation
+      - reducing manual repeat work
+      - clear escalation with context
+    project_emphasis:
+      - dashboards / health checks / metrics tracking
+
+  frontend:
+    label: Front-end / UI Engineering
+    summary_lens: interfaces, components, TypeScript, REST consumption, performance and loading/error states
+    skill_buckets:
+      - Front-end
+      - UI
+      - Integração & qualidade
+      - Entrega
+    keyword_signals:
+      - front-end
+      - frontend
+      - react
+      - typescript
+      - next.js
+      - nextjs
+      - ui
+      - css
+      - tanstack
+      - vite
+    experience_emphasis:
+      - translating requirements into UI flows
+      - typed API consumption
+      - reusable components / tests
+    project_emphasis:
+      - React + TypeScript UI, TanStack Query, responsive layouts
+
+  backend:
+    label: Backend / API Engineering
+    summary_lens: REST APIs, auth, large ingestion, async jobs, SQL modeling, production ownership
+    skill_buckets:
+      - Backend & APIs
+      - Integrations
+      - Databases
+      - Platform
+      - Ways of working
+    keyword_signals:
+      - backend
+      - api
+      - fastapi
+      - fastapi
+      - asp.net
+      - microservices
+      - jwt
+      - hangfire
+      - python engineer
+    experience_emphasis:
+      - FastAPI / ASP.NET services
+      - validation + async processing
+      - SQL modeling / OpenAPI docs
+    project_emphasis:
+      - API services, auth, ingestion, health checks
+
+  data:
+    label: Data / Platforms / Pipelines
+    summary_lens: ingestion, validation, SQL modeling, staging/gold layers, observability of jobs
+    skill_buckets:
+      - Pipelines & dados
+      - Plataformas
+      - Cloud & plataforma
+      - Observabilidade & governança
+    keyword_signals:
+      - data engineer
+      - data platform
+      - pipeline
+      - databricks
+      - etl
+      - sql
+      - parquet
+      - warehouse
+      - analytics
+    experience_emphasis:
+      - ingestion/validation pipelines
+      - batch modeling and indexing
+      - job status / exception handling
+    project_emphasis:
+      - analytical pipelines, gold schema, sync jobs
+
+  gtm:
+    label: GTM / RevOps / Marketing Technology
+    summary_lens: CRM hygiene, funnel metrics, HubSpot/Salesforce/Braze, cross-tool workflows
+    skill_buckets:
+      - CRM & marketing ops
+      - Engineering & automation
+      - AI workflows
+      - Reporting & analysis
+      - Collaboration
+    keyword_signals:
+      - gtm
+      - revops
+      - marketing technology
+      - martech
+      - hubspot
+      - salesforce
+      - braze
+      - funnel
+      - crm
+      - sales operations
+    experience_emphasis:
+      - CRM integrity / UTM / enrichment
+      - funnel dashboards for leadership
+      - cross-platform marketing workflows
+    project_emphasis:
+      - automations across CRM and spreadsheets
+
+  sales_eng:
+    label: Sales Engineer / Solutions / Pre-sales
+    summary_lens: bridge Sales–Marketing–Engineering; discovery, demos, requirements → solutions
+    skill_buckets:
+      - Pre-sales & solutioning
+      - CRM & revenue stack
+      - Technical
+      - Collaboration
+    keyword_signals:
+      - sales engineer
+      - solutions engineer
+      - pre-sales
+      - presales
+      - customer-facing
+      - discovery
+      - demo
+      - poc
+    experience_emphasis:
+      - stakeholder liaison
+      - presentation-ready reporting
+      - requirements → documented solutions
+    project_emphasis:
+      - customer-ready handoffs and enablement docs
+
+  fullstack:
+    label: Full-stack
+    summary_lens: both UI delivery and API/integration ownership; end-to-end features
+    skill_buckets:
+      - Front-end
+      - Backend & APIs
+      - Integração
+      - Entrega
+    keyword_signals:
+      - full-stack
+      - fullstack
+      - full stack
+      - end-to-end
+    experience_emphasis:
+      - features spanning UI + API
+      - integrations and deploys
+    project_emphasis:
+      - Report Builder style full apps
+
+defaults:
+  fallback_angle: gtm
+  max_angles_to_blend: 1  # keep one primary angle for clarity

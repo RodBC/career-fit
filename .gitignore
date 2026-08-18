@@ -1,0 +1,23 @@
+# Private user data
+data/profile.yaml
+data/out/
+*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+dist/
+build/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.aux
+*.log
+*.out

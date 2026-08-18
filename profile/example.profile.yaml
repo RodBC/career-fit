@@ -1,0 +1,186 @@
+# Deep career profile — single source of truth for the pipeline.
+# Private copy lives in data/profile.yaml (gitignored). This example is fictional.
+
+$schema_note: "See profile/schema.yaml for field meanings."
+
+identity:
+  name: Alex Rivera
+  city: São Paulo, Brazil
+  phone: "+55 11 90000-0000"
+  email: alex@example.com
+  linkedin: linkedin.com/in/alex-example
+  languages:
+    - Portuguese (fluent)
+    - English (fluent)
+    - Spanish (intermediate)
+
+career_tutoring:
+  enjoyed_most:
+    - Turning messy operational workflows into simple automations
+    - Pairing with stakeholders to clarify ambiguous requirements
+  positive_differentials:
+    - Owns problems end-to-end without waiting for perfect specs
+    - Bilingual remote communicator; comfortable with async updates
+  improvement_areas:
+    - Deeper systems design for very large distributed services
+    - Public speaking in large all-hands settings
+  technical_knowledge:
+    - Python, FastAPI, SQL, REST APIs
+    - React + TypeScript basics
+    - HubSpot / Salesforce ops
+    - AWS deploy fundamentals
+  networking_notes:
+    - Prefer warm intros via mutual connections when possible
+    - Recruiters in RevOps and B2B SaaS are high-signal
+  hates_doing:
+    - Pure ticket farms with no ownership
+    - Rewriting the same report manually every week
+  challenges_overcome:
+    - Inherited broken CRM data; rebuilt hygiene + dashboards used by leadership
+    - Shipped first production API integration under tight partner deadline
+
+targets:
+  roles_wanted:
+    - GTM Engineer
+    - Backend / API Engineer
+    - Operations-minded Content Engineer
+  locales: [en, pt]
+  remote: true
+
+facts:
+  years_experience: 4
+  education:
+    - degree: B.S. in Systems Development
+      school: Example University
+      dates: "2021 — 2025"
+  certifications:
+    - IBM Data Analysis with Python
+  experience:
+    - id: role_current
+      title: Associate Engineer
+      company: Northwind Health
+      location: São Paulo / Remote
+      start: "2026-03"
+      end: present
+      bullets_by_angle:
+        ops:
+          - Monitor integration pipelines daily; validate against business rules before partner delivery.
+          - Investigate failed flows; resolve independently; escalate with clear context.
+        backend:
+          - Build FastAPI services with auth and import/preview validation before persistence.
+          - Model SQL tables for raw and processed data; document OpenAPI for partners.
+        frontend:
+          - Partner with stakeholders to turn requirements into UI flows (auth, upload, status).
+          - Consume typed REST APIs with loading/error states.
+        data:
+          - Maintain ingestion/validation pipelines with preview before persistence.
+          - Optimize batch query patterns and job status endpoints.
+        gtm:
+          - Surface pipeline issues early with lightweight reporting used by ops stakeholders.
+        sales_eng:
+          - Clarify requirements with stakeholders and deliver customer-ready handoffs.
+    - id: role_prev
+      title: Marketing Technology
+      company: PulseFit
+      location: Remote
+      start: "2025-09"
+      end: "2026-02"
+      bullets_by_angle:
+        ops:
+          - Verified campaign data across CRM/MAP tools before live outreach scaled.
+          - Flagged enrichment gaps early; drove fixes with Marketing and Product.
+        gtm:
+          - Operated HubSpot, Salesforce, and Braze workflows; improved cross-platform reliability.
+          - Translated operational issues into actionable fixes.
+        backend:
+          - Designed integration workflows across HubSpot, Salesforce, and Braze.
+        sales_eng:
+          - Acted as liaison between business users and backend systems for GTM needs.
+        data:
+          - Validated coherence of customer/campaign data across platforms before scale.
+        frontend:
+          - Worked in multidisciplinary remote squads translating Product needs into technical solutions.
+    - id: role_encora
+      title: Sales Technology Specialist
+      company: Beacon Inc
+      location: Brazil / Remote
+      start: "2023-01"
+      end: "2024-12"
+      bullets_by_angle:
+        gtm:
+          - Maintained CRM integrity via audits, enrichment, and UTM tagging.
+          - Built funnel dashboards for Sales and BD leadership.
+        ops:
+          - Acted as final quality layer on CRM and campaign data.
+          - Documented SOPs and raised operational standards.
+        sales_eng:
+          - Supported Sales/BD with presentation-ready funnel reports.
+          - Owned enablement docs that improved process adoption.
+        backend:
+          - Automated operational workflows and improved CRM data quality with scripts.
+        data:
+          - Improved HubSpot data integrity and funnel reporting for product decisions.
+        frontend:
+          - Built metric dashboards with focus on visual clarity for Sales and Product.
+  projects:
+    - id: report_builder
+      name: Report Builder
+      bullets_by_angle:
+        frontend:
+          - React + TypeScript (Vite): reusable components, TanStack Query, responsive layouts.
+        backend:
+          - FastAPI REST API with health checks, cache, lazy loading, typed schemas.
+        data:
+          - Reusable Python analytical pipeline with preflight, SQL params, and JSON artifacts.
+        ops:
+          - Operational dashboards with error states and metrics tracking.
+        gtm:
+          - Internal tooling that cut manual reporting across CRM exports.
+        sales_eng:
+          - Demo-ready dashboards used to explain pipeline health to non-technical stakeholders.
+
+summaries_by_angle:
+  ops:
+    en: Operations-focused professional with an engineering background and 4+ years keeping high-volume workflows running in remote environments. Experienced in daily pipeline monitoring, QA before scale, troubleshooting, and automating repetitive work with Python, spreadsheets, and AI-native tools.
+  frontend:
+    pt: Desenvolvedor Front-end com 4+ anos entregando interfaces em React e TypeScript, com integrações REST, componentes reutilizáveis e colaboração próxima com Backend, QA e Produto.
+  backend:
+    en: Backend engineer with 4+ years building REST APIs, B2B integrations, and processing pipelines in Python/FastAPI. Owns validation, async jobs, SQL modeling, and production readiness.
+  data:
+    pt: Engenheiro com 4+ anos em pipelines de dados, modelagem SQL e integrações B2B. Foco em ingestão/validação, jobs assíncronos e observabilidade operacional.
+  gtm:
+    en: Engineer with 4+ years across Sales and Marketing stacks — HubSpot, Salesforce, Braze — plus integrations, funnel reporting, and automation in remote environments.
+  sales_eng:
+    en: Technical customer-facing professional bridging Sales, Marketing, and Engineering in B2B SaaS. Turns requirements into CRM/integration solutions and tells the story clearly.
+
+skills_by_angle:
+  ops:
+    - "**Content & pipeline operations**: workflow monitoring, exception handling, health checks, catch-before-scale QA"
+    - "**Quality assurance**: validation rules, documentation, root-cause follow-up"
+    - "**Automation & tooling**: Python, REST APIs, scripts, AI-native development"
+    - "**Reporting & metrics**: Excel, dashboards, operational KPIs"
+    - "**Collaboration**: Jira/ClickUp; clear English written communication"
+  frontend:
+    - "**Front-end**: React, TypeScript, hooks, TanStack Query, Vite"
+    - "**UI**: HTML/CSS, responsividade, estados de loading/erro"
+    - "**Integração & qualidade**: APIs REST tipadas, testes, Git"
+    - "**Entrega**: Scrum/Kanban, documentação, deploy basics"
+  backend:
+    - "**Backend & APIs**: Python, FastAPI, REST, OpenAPI, auth, background jobs"
+    - "**Integrations**: multi-system connectivity, validation, exception handling"
+    - "**Databases**: SQL Server/PostgreSQL, indexing, batch patterns"
+    - "**Platform**: AWS, Docker, CI/CD fundamentals"
+  data:
+    - "**Pipelines & dados**: ingestão/validação, modelagem, agregações, health checks"
+    - "**Plataformas**: SQL, staging/processed/gold, jobs assíncronos"
+    - "**Observabilidade**: status de jobs, regras de negócio, handoff docs"
+  gtm:
+    - "**CRM & marketing ops**: HubSpot, Salesforce, Braze; UTM, enrichment, funnel reporting"
+    - "**Engineering & automation**: Python, REST APIs, SQL, internal tools"
+    - "**Reporting & analysis**: Excel + CRM dashboards, data quality checks"
+    - "**Collaboration**: Marketing, Sales, Product, technical partners"
+  sales_eng:
+    - "**Pre-sales & solutioning**: discovery, requirements, POC support, presentations"
+    - "**CRM & revenue stack**: Salesforce, HubSpot; pipeline reporting"
+    - "**Technical**: REST APIs, SQL, Python, integration architecture"
+    - "**Collaboration**: Sales/BD/Marketing/Product enablement"

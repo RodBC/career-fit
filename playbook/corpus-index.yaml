@@ -1,0 +1,49 @@
+# Maps anonymized corpus examples → angles.
+# Source patterns came from real tailored applications; examples in corpus/ are sanitized.
+
+examples:
+  - id: ops-hardlaunch
+    angle: ops
+    locale: en
+    file: examples/ops-summary-skills.md
+    notes: High-volume workflow / catch-before-scale language; same roles reframed as ops.
+
+  - id: frontend-product
+    angle: frontend
+    locale: pt
+    file: examples/frontend-summary-skills.md
+    notes: React/TS first; IQVIA bullets become UI/API collaboration.
+
+  - id: backend-api
+    angle: backend
+    locale: en
+    file: examples/backend-summary-skills.md
+    notes: FastAPI/ASP.NET/SQL emphasis; projects = API proofs.
+
+  - id: data-platform
+    angle: data
+    locale: pt
+    file: examples/data-summary-skills.md
+    notes: Pipelines, gold layer, job observability.
+
+  - id: gtm-revops
+    angle: gtm
+    locale: en
+    file: examples/gtm-summary-skills.md
+    notes: HubSpot/Salesforce/Braze + funnel reporting.
+
+  - id: sales-engineer
+    angle: sales_eng
+    locale: en
+    file: examples/sales-eng-summary-skills.md
+    notes: Customer-facing bridge; discovery and demos language.
+
+  - id: outreach-short
+    kind: outreach
+    file: examples/outreach-message.md
+    notes: Short, concrete, one proof project, soft CTA.
+
+  - id: interview-prep-outline
+    kind: tutoring
+    file: examples/interview-prep-outline.md
+    notes: Role decoding → interviewer context → fit map → talking points.
