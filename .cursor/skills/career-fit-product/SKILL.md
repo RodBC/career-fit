@@ -36,5 +36,8 @@ Ship only if it improves at least one:
 - Auto-send DMs / auto-post? **No** — draft + track only.  
 - Full suggestion engine before tracker? **No** — Phase B before C.  
 - More job boards? **Paste adapters first**; green/yellow only per `docs/sources.yaml`.  
+- Pro price? **$29/mo** working (soft gates in UI; Stripe later).  
+- Next craft upgrade? Per-angle tagging + JD normalizers after Home feels sticky.
 
-Read `docs/PRODUCT.md` + `docs/ECOSYSTEM.md` before changing tiers or positioning.
+Read `docs/PRODUCT.md` + `docs/ECOSYSTEM.md` + `docs/context/CURRENT.md` before changing tiers or positioning.
+Use skill `career-fit-tracker` for pipeline/Home/Free limits.

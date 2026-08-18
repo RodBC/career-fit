@@ -53,6 +53,7 @@ If a feature does not tighten this path or increase willingness to pay, do not b
 | `career-fit-product` | Roadmap, pricing, scope fights |
 | `career-fit-tailor` | Resume angle / LaTeX / anti-AI-smell work |
 | `career-fit-sources` | Job boards, recruiters, ingest adapters |
+| `career-fit-tracker` | Pipeline, outreach, Home, Free/Pro gates, Today |
 
 ## Commit hygiene
 

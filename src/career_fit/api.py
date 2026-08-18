@@ -20,8 +20,15 @@ from .recruiters import (
 )
 from .render import render_latex, render_markdown
 from .tailor import tailor
+from .tracker import (
+    build_application_from_tailor,
+    build_outreach_from_contact,
+    generate_today_cards,
+    limits_payload,
+    match_application_id,
+)
 
-app = FastAPI(title="Career Fit API", version="0.3.0")
+app = FastAPI(title="Career Fit API", version="0.4.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,6 +72,33 @@ class IntakeRequest(BaseModel):
 
 class ParseResumeRequest(BaseModel):
     text: str = ""
+
+
+class SaveApplicationRequest(BaseModel):
+    title: str = ""
+    company: str = ""
+    angle: str = ""
+    locale: str = "en"
+    job_description: str = ""
+    markdown: str = ""
+    latex: str = ""
+    company_message: str = ""
+    summary: str = ""
+    proof: str = ""
+
+
+class LogOutreachRequest(BaseModel):
+    contact: dict[str, Any]
+    application_id: str | None = None
+    applications: list[dict[str, Any]] = []
+    sent: bool = True
+
+
+class TodayRequest(BaseModel):
+    profile: dict[str, Any] | None = None
+    applications: list[dict[str, Any]] = []
+    outreach: list[dict[str, Any]] = []
+    dismissed_ids: list[str] = []
 
 
 def _default_profile() -> dict[str, Any]:
@@ -239,6 +273,57 @@ def api_intake(req: IntakeRequest) -> dict[str, Any]:
         "parsed_roles": meta.get("parsed_roles", 0),
         "parsed_projects": meta.get("parsed_projects", 0),
     }
+
+
+@app.get("/api/tracker/limits")
+def api_tracker_limits() -> dict[str, Any]:
+    return limits_payload()
+
+
+@app.post("/api/tracker/save-application")
+def api_save_application(req: SaveApplicationRequest) -> dict[str, Any]:
+    if not (req.markdown or req.latex or req.company_message):
+        raise HTTPException(400, "Generate a tailored pack before saving")
+    bundle = build_application_from_tailor(
+        title=req.title,
+        company=req.company,
+        angle=req.angle,
+        locale=req.locale,
+        job_description=req.job_description,
+        markdown=req.markdown,
+        latex=req.latex,
+        company_message=req.company_message,
+        summary=req.summary,
+        proof=req.proof,
+    )
+    return {"ok": True, **bundle}
+
+
+@app.post("/api/tracker/log-outreach")
+def api_log_outreach(req: LogOutreachRequest) -> dict[str, Any]:
+    if not req.contact.get("name"):
+        raise HTTPException(400, "contact.name required")
+    app_id = req.application_id or match_application_id(
+        str(req.contact.get("company") or ""),
+        req.applications,
+    )
+    outreach = build_outreach_from_contact(
+        req.contact,
+        application_id=app_id,
+        sent=req.sent,
+    )
+    return {"ok": True, "outreach": outreach}
+
+
+@app.post("/api/tracker/today")
+def api_today(req: TodayRequest) -> dict[str, Any]:
+    cards = generate_today_cards(
+        req.profile,
+        req.applications,
+        req.outreach,
+        dismissed_ids=req.dismissed_ids,
+    )
+    return {"cards": cards, "max": 3}
 
 
 def run() -> None:

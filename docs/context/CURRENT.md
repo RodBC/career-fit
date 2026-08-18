@@ -8,82 +8,70 @@
 
 ## Goal
 
-Ship a profitable **career OS** SaaS. Wedge: deep profile + resume → tailored CV + decision-maker outreach. Ecosystem: track applications/people/network + suggest growth moves (courses, posts, projects, hackathons, contacts) behind friendly UI/UX.
+Ship a profitable **career OS** SaaS. Wedge: deep profile + resume → tailored CV + decision-maker outreach. Ecosystem: track applications/people/network + suggest growth moves behind friendly UI/UX.
 
 ```
-intake (profile + resume)
-  → tailor + reach-out
-  → track jobs / recruiters / network
-  → suggest next growth actions
+intake → tailor + reach-out → track applications/people → suggest next moves
 ```
 
-See `docs/ECOSYSTEM.md` for the full end-state; do not boil the ocean before the wedge converts.
+Roadmap slices: see progressive plan S0–S6 (Home → pipeline → people → soft Pro → Today → craft quality).
 
 ## What exists now
 
-- Playbook: `playbook/angles.yaml`, `rewrite-rules.md`, `structure.md`  
-- Core Python: classify / tailor / render / outreach / recruiters / jobs / **intake**  
-- API: FastAPI on `:8787` — includes `/api/intake`, `/api/parse-resume`  
-- UI: Vite React on `:5173` — **guided intake wizard** + tailor workspace  
-- AI contract: `AGENTS.md`, `.cursor/rules/`, `.cursor/skills/`  
-- Product docs: `PRODUCT.md`, `ECOSYSTEM.md`, `entrep-transfer.md`, `sources.yaml`  
-- **Code archaeology for AIs:** `docs/AI_BUILD_MAP.md` (commit layers, module map, where-to-edit)
+- Playbook + deterministic tailor / outreach / recruiters / jobs / intake  
+- **Tracker:** `tracker.py` — Application, Artifact, Outreach, Free limits, Today cards  
+- API `:8787` — `/api/intake`, `/api/tracker/*`  
+- UI `:5173` — shell **Home / Intake / Craft**; localStorage persistence  
+- Soft Free: **3 tailor/mo**, **5 applications**; Pro working price **$29/mo** (no Stripe yet)  
+- Skills: context, product, tailor, sources, **tracker**  
+- Docs: `AI_BUILD_MAP.md`, PRODUCT, ECOSYSTEM, ARCHITECTURE  
 
 ## Decisions locked
 
 | Decision | Rationale |
 |----------|-----------|
 | No automated LinkedIn scraper in public core | ToS, bans, fragility; wrong moat |
-| Deterministic tailor before LLM | Fast, cheap, controllable; LLM is polish |
-| Manual send / manual post | Draft + track only; no spam automation |
-| Paste-first job & recruiter intake | Same user outcome without red-tier harvesting |
-| Context must live in git | Chat is ephemeral; SaaS iteration needs memory |
-| Ecosystem after wedge | Tracker (B) before suggestion flood (C); UX stays calm |
-| Code archaeology in `AI_BUILD_MAP.md` | Agents extend ownership tables when adding layers — not chat archaeology |
+| Deterministic tailor before LLM | Fast, cheap, controllable |
+| Manual send / manual post | Draft + track only |
+| Paste-first job & recruiter intake | Same outcome without red-tier harvest |
+| Context must live in git | Chat ephemeral |
+| Ecosystem after wedge | Tracker before suggestion flood |
+| Code archaeology in `AI_BUILD_MAP.md` | Agents extend ownership tables |
 | Resume intake = rules-first text/YAML | No invented employers; PDF deferred |
+| Phase B Home before angle-tagging UI | Retention/pay before craft polish |
+| Pro working price **$29/mo** | Inside $19–39 band; Stripe later |
+| Soft Free gates (local counters) | Teach WTP before auth/billing |
+| Today max 3 cards | Calm coach; cite why |
 
 ## Active priorities (P0 → P2)
 
-1. **P0** ~~Guided intake in UI~~ ✅ (form + resume paste; localStorage profile)  
-2. **P0** Keep context/skills discipline as default agent behavior  
-3. **P1** Import tagged profile from `curriculumn` corpus  
-4. **P1** Better JD normalizers (LinkedIn/Gupy/inHire paste)  
-5. **P1** Applications + outreach tracker (Phase B objects)  
-6. **P1** Per-angle bullet tagging UI (intake currently copies facts to all angles)  
-7. **P2** Suggestion cards from profile gaps (Phase C)  
-8. **P2** Optional LLM polish + interview prep; PDF resume parse decision  
-9. **Later** Network bridges; green-tier feeds; browser-assisted capture  
+1. ~~Guided intake~~ ✅  
+2. ~~App shell Home + Phase B pipeline/people~~ ✅  
+3. ~~Soft Free/Pro gates + Today lite~~ ✅  
+4. **P1** Per-angle bullet tagging UI (intake still mirrors facts across angles)  
+5. **P1** Better JD normalizers (LinkedIn/Gupy/inHire paste)  
+6. **P1** Import tagged profile from `curriculumn` (founder dogfood)  
+7. **P2** Richer suggestion taxonomy (courses/posts/projects) — only after tracker habit  
+8. **P2** PDF resume parse decision; optional LLM polish (no inventing facts)  
+9. **Later** Real auth + Stripe; network bridges; green-tier feeds  
 
 ## Open questions
 
-- Pricing exact numbers (Pro band $19–39 draft)  
-- Resume parse: keep rules-first vs add optional LLM for PDF/messy pastes (still no inventing facts)  
+- Stripe / auth timing (after dogfood proves sticky Home loop)  
+- Resume PDF: rules extract→confirm vs deferred  
 - Browser-extension assisted capture: private fork first?  
-- How aggressive should “Today” suggestions be (cap at 3?)  
 
 ## Do not regress
 
 - Inventing career facts  
-- Shipping LinkedIn credential stuffing / session hijack  
-- Auto-DM or auto-LinkedIn-post  
-- Vague README — stay decisive  
-- Building full CRM UI before intake + tailor are delightful  
-
-## Session handoff template
-
-When updating this file, keep sections above and add under **Last session**:
-
-```
-### Last session
-- Date:
-- Done:
-- Blocked:
-- Next exact task:
-```
+- LinkedIn harvest / auto-DM  
+- HubSpot-anxiety CRM UI  
+- Unlocking Free limits without a Pro story  
+- Skipping `CURRENT` / `AI_BUILD_MAP` / skills updates  
 
 ### Last session
 
 - Date: 2026-08-18  
-- Done: Guided intake — `intake.py`, `/api/intake` + `/api/parse-resume`, `Intake.tsx` wizard (5 steps), localStorage profile, AI_BUILD_MAP §4–5 updated  
-- Blocked: PDF resume parse deferred  
-- Next exact task: Phase B applications + outreach tracker objects (or per-angle tagging UI if wedge quality needs it first)  
+- Done: S0 commit intake; S1–S5 lite — Home shell, tracker module/API, Save to pipeline, Log outreach, soft Free gates, Today cards, tracker skill, docs  
+- Blocked: none  
+- Next exact task: Per-angle bullet tagging UI (S6 craft) **or** JD paste normalizers — pick by dogfood pain  

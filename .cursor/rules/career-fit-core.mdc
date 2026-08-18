@@ -37,4 +37,6 @@ Wedge first. Ecosystem map in `docs/ECOSYSTEM.md`. Do not build features outside
 
 - Deterministic tailor + playbook rules  
 - Paste/CSV/green-tier sources (`docs/sources.yaml`)  
+- Tracker skill for pipeline/Home/Free gates (`career-fit-tracker`)  
 - Small conventional commits  
+- Update `docs/AI_BUILD_MAP.md` when modules/routes/views change  

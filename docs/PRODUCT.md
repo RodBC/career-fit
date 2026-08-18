@@ -51,7 +51,7 @@ Do not build the full ecosystem before the wedge converts. Full map: [`docs/ECOS
 
 **Purpose:** acquisition; CV quality sells itself.
 
-### Pro — $19–39/mo (TBD)
+### Pro — $29/mo (working price; was $19–39 band)
 
 - Unlimited tailor  
 - Full career CRM (applications, outreach, network notes)  
@@ -86,8 +86,8 @@ Scrapers are **not** the moat.
 | Phase | Milestone | Status |
 |-------|-----------|--------|
 | A | Guided intake (profile form + resume upload) | ✅ local MVP |
-| B | Applications + outreach tracker in UI | next |
-| C | First suggestion cards (gap → course/post/project) | planned |
+| B | Applications + outreach tracker in UI | ✅ local MVP (Home + localStorage) |
+| C | First suggestion cards (gap → course/post/project) | ✅ Today lite (max 3); richer taxonomy later |
 | D | Network bridge objects | planned |
 
 ## Explicit non-goals (near term)

@@ -29,12 +29,14 @@ We productize the craft **and** the ongoing operating rhythm.
 
 | Capability | Status |
 |------------|--------|
-| Multi-angle resume playbook (ops / frontend / backend / data / GTM / sales eng) | ✅ |
+| Multi-angle resume playbook | ✅ |
 | Deterministic tailor (no LLM required) | ✅ |
-| Guided profile + resume intake (rules-first) | ✅ |
-| Recruiter paste → ranked contacts + DM/email drafts | ✅ |
+| Guided profile + resume intake | ✅ |
+| Home shell + pipeline + people tracker | ✅ |
+| Today coach (max 3) + soft Free/Pro ($29) | ✅ |
+| Recruiter paste → ranked drafts | ✅ |
 | Vite UI + FastAPI | ✅ |
-| Career CRM + suggestion engine | 🧭 planned (`docs/ECOSYSTEM.md`) |
+| Per-angle tagging / Stripe / network bridges | 🧭 next / later |
 | Automated LinkedIn scraping | ❌ by design |
 
 ```bash

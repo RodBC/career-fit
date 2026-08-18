@@ -19,7 +19,8 @@ History is short and intentional. Treat each commit as a **layer**, not a random
 | `5f181f1` | `feat: add Vite UI, API, and recruiter paste flow` | **Distribution surface** | Expose the same core over FastAPI + Vite so a human can paste JD/recruiters without YAML CLI gymnastics. Still no scraping. |
 | `f613de8` | `docs: decisive product framing and mandatory AI context loop` | **Agent operating system** | Force every AI to read/write durable SaaS state (`AGENTS.md`, `CURRENT.md`, skills, source tiers). Stop chat-only memory. |
 | `f89082d` | `docs: lock ecosystem vision for career CRM and coach loop` | **North-star expansion** | Document Phase B/C (tracker + suggestions) so agents plan retention without boiling the ocean before the wedge converts. |
-| *(uncommitted)* | `feat: guided profile + resume intake` | **Phase A intake** | Form + rules-first resume parse → tailor-ready profile; UI wizard before workspace. |
+| `92c8048` | `feat: guided profile intake and AI build map` | **Phase A intake** | Form + rules-first resume parse → tailor-ready profile; `AI_BUILD_MAP` for agents. |
+| *(pending)* | `feat: Home shell, pipeline tracker, soft Pro gates` | **Phase B + soft monetization** | App shell Home/Intake/Craft; applications/outreach localStorage; Today cards; Free limits; Pro $29. |
 
 **Invariant across all layers:** paste/CSV intake · deterministic tailor first · user sends messages · no LinkedIn harvester in public core.
 
@@ -34,11 +35,11 @@ playbook/ + profile/ + corpus/ + prompts/     ← IP & rules (edit carefully)
         ↓
 src/career_fit/{models,angle,tailor,render,outreach}   ← assemble path
         ↓
-src/career_fit/{jobs,recruiters,intake}         ← paste normalizers (JD / contacts / resume)
+src/career_fit/{jobs,recruiters,intake,tracker}  ← paste + career CRM shapes
         ↓
 src/career_fit/{cli,api}                     ← entrypoints (same core)
         ↓
-web/                                         ← UX only; calls API
+web/ (Home · Intake · Craft)                 ← UX only; localStorage persist
         ↓
 docs/ + AGENTS.md + .cursor/                 ← product memory & agent contract
 ```
@@ -84,6 +85,7 @@ Private corpus (not in this repo): `/home/decastro/studies/curriculumn` — LaTe
 | `jobs.py` | JD paste → fields | `parse_job_text`, `ParsedJob` | Normalize LinkedIn/Gupy/inHire **text** without fetch |
 | `recruiters.py` | Contact paste/CSV → ranked drafts | `parse_contacts_*`, `score_title`, `enrich_with_messages` | People enter via user paste; title ranking is the value |
 | `intake.py` | Guided form + resume text → profile | `parse_resume_text`, `build_profile_from_intake` | Rules-first; same facts on every angle until user tags; no invented employers |
+| `tracker.py` | Applications, artifacts, outreach, limits, Today | `build_application_from_tailor`, `generate_today_cards`, `limits_payload` | Retention + soft Free/Pro; local-first shapes |
 | `cli.py` | argparse commands | `classify`, `tailor`, `eval`, `recruiters`, `serve`, `fit-brief` | Power-user + scripts |
 | `api.py` | FastAPI on `:8787` | `/api/tailor`, `/api/intake`, … | Thin HTTP over the same functions as CLI |
 | `__main__.py` | `python -m career_fit` | — | Package entry |
@@ -126,6 +128,10 @@ identity + career_tutoring + targets + resume_text
 | POST | `/api/upload-profile` | YAML/JSON validate → return profile (no server persist) |
 | POST | `/api/parse-resume` | `parse_resume_text` (preview) |
 | POST | `/api/intake` | `build_profile_from_intake` |
+| GET | `/api/tracker/limits` | Free caps + Pro $29 blurb + stages |
+| POST | `/api/tracker/save-application` | Application + Artifact bundle |
+| POST | `/api/tracker/log-outreach` | Outreach record (+ company→app match) |
+| POST | `/api/tracker/today` | Max 3 Today cards |
 
 CORS allows Vite `:5173` only. Adding a new capability: implement in a core module first, then expose CLI + one API route + `web/src/api.ts` helper.
 
@@ -135,13 +141,16 @@ CORS allows Vite `:5173` only. Adding a new capability: implement in a core modu
 
 | File | Role | Why |
 |------|------|-----|
-| `src/App.tsx` | View switch: intake ↔ tailor workspace | Steps 1–4; persists profile via `api.storeProfile` |
-| `src/Intake.tsx` | Guided 5-step interview (You → Work → Targets → Resume → Review) | Progressive disclosure; calls `/api/intake`; YAML shortcut still available |
-| `src/api.ts` | Typed `fetch` + `localStorage` profile helpers | No business logic; mirror API contracts |
-| `src/styles.css` | Local MVP styling + intake step chrome | Extend existing calm palette |
+| `src/App.tsx` | Shell: nav Home / Intake / Craft | Returning users → Home; fresh → Intake |
+| `src/Home.tsx` | Pipeline + People + Today + Pro panel | Retention surface; calm, brand-forward |
+| `src/Intake.tsx` | Guided 5-step interview | Progressive disclosure → profile |
+| `src/Craft.tsx` | Tailor + save pipeline + log outreach | Wedge craft + memory write path |
+| `src/store.ts` | localStorage profile/apps/artifacts/outreach/usage | Client persist until real backend |
+| `src/api.ts` | Typed `fetch` to `:8787` | Thin; no business rules |
+| `src/styles.css` | Calm teal/ink + Fraunces display | Extend; don’t purple-slop |
 | `vite.config.ts` | Dev server | Proxies `/api` → `:8787` |
 
-**UI status:** Phase A intake + tailor + recruiter drafts. No applications tracker, no suggestion home — Phase B/C (`docs/ECOSYSTEM.md`). Next UI: richer resume tagging UI and/or Phase B application objects. PDF resume parse still deferred (open question).
+**UI status:** Phase A intake + Phase B Home/pipeline/people + soft Free gates + Today lite. Next: per-angle tagging, JD normalizers, real auth/billing later.
 
 ---
 
@@ -166,6 +175,7 @@ CORS allows Vite `:5173` only. Adding a new capability: implement in a core modu
 |-------|------------------|
 | `career-fit-tailor` | `playbook/*`, `angle.py`, `tailor.py`, `render.py`, `evals/`, `prompts/tailor_cv.md` |
 | `career-fit-sources` | `jobs.py`, `recruiters.py`, `intake.py`, `docs/sources.yaml`, future `sources/` |
+| `career-fit-tracker` | `tracker.py`, `store.ts`, `Home.tsx`, `Craft.tsx`, Free/Pro gates |
 | `career-fit-product` | `PRODUCT.md`, `ECOSYSTEM.md`, `CURRENT.md` — not random features |
 | `career-fit-context` | `CURRENT.md` + daily log |
 
@@ -186,6 +196,7 @@ CORS allows Vite `:5173` only. Adding a new capability: implement in a core modu
 | Import from private corpus | profile import path / guided intake | Commit `/curriculumn` files |
 | Resume text parse quality | `intake.py` | LLM inventing employers; PDF until decided |
 | Intake form copy / steps | `web/src/Intake.tsx` | Duplicating assemble logic in React |
+| Pipeline / outreach / Today / Free caps | `tracker.py` + `store.ts` + `Home.tsx`/`Craft.tsx` | HubSpot-scale CRM; Stripe before sticky loop |
 
 ---
 

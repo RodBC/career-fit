@@ -60,6 +60,23 @@ export type IntakeResult = {
   parsed_projects: number;
 };
 
+export type TrackerLimits = {
+  free_tailor_per_month: number;
+  free_application_cap: number;
+  pro_price_usd: number;
+  pro_blurb: string;
+  stages: { id: string; label: string }[];
+};
+
+export type TodayCard = {
+  id: string;
+  title: string;
+  why: string;
+  action: string;
+  application_id?: string | null;
+  outreach_id?: string | null;
+};
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
@@ -136,20 +153,6 @@ export function submitIntake(body: IntakePayload) {
   });
 }
 
-export function parseResume(text: string) {
-  return api<{
-    summary: string;
-    skills: string[];
-    experience: unknown[];
-    projects: unknown[];
-    education: unknown[];
-    warnings: string[];
-  }>("/api/parse-resume", {
-    method: "POST",
-    body: JSON.stringify({ text }),
-  });
-}
-
 export async function uploadProfileYaml(file: File): Promise<Profile> {
   const fd = new FormData();
   fd.append("file", file);
@@ -159,22 +162,61 @@ export async function uploadProfileYaml(file: File): Promise<Profile> {
   return data.profile;
 }
 
-const STORAGE_KEY = "career-fit.profile.v1";
-
-export function loadStoredProfile(): Profile | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as Profile;
-  } catch {
-    return null;
-  }
+export function fetchLimits() {
+  return api<TrackerLimits>("/api/tracker/limits");
 }
 
-export function storeProfile(profile: Profile | null) {
-  if (!profile) {
-    localStorage.removeItem(STORAGE_KEY);
-    return;
-  }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+export function saveApplicationRemote(body: {
+  title: string;
+  company: string;
+  angle: string;
+  locale: string;
+  job_description: string;
+  markdown: string;
+  latex: string;
+  company_message: string;
+  summary: string;
+  proof: string;
+}) {
+  return api<{
+    ok: boolean;
+    application: import("./store").Application;
+    artifact: import("./store").Artifact;
+  }>("/api/tracker/save-application", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
+
+export function logOutreachRemote(body: {
+  contact: Contact;
+  application_id?: string | null;
+  applications: import("./store").Application[];
+  sent?: boolean;
+}) {
+  return api<{ ok: boolean; outreach: import("./store").OutreachRecord }>(
+    "/api/tracker/log-outreach",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+}
+
+export function fetchToday(body: {
+  profile: Profile | null;
+  applications: import("./store").Application[];
+  outreach: import("./store").OutreachRecord[];
+  dismissed_ids: string[];
+}) {
+  return api<{ cards: TodayCard[]; max: number }>("/api/tracker/today", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+// Re-exports for callers that used api.ts storage helpers
+export {
+  loadStoredProfile,
+  storeProfile,
+} from "./store";
