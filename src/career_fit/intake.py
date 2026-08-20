@@ -355,8 +355,9 @@ def build_profile_from_intake(
     email = (identity.get("email") or "").strip()
     if not name:
         raise ValueError("identity.name is required")
-    if not email:
-        raise ValueError("identity.email is required")
+    # Email optional on LinkedIn-first light journey — asked only when needed later
+    identity["name"] = name
+    identity["email"] = email
 
     parsed = parse_resume_text(resume_text) if resume_text.strip() else ParsedResume()
 

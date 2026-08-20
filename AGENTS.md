@@ -34,7 +34,7 @@ If a feature does not tighten this path or increase willingness to pay, do not b
 
 ## Hard bans
 
-- Automated LinkedIn profile/job harvesting in the public core  
+- Multi-account / password-in-API / mass LinkedIn harvest (red tier) — session-assisted job URL map is yellow and allowed (`docs/sources.yaml`)  
 - “Apply for the user” / mass DM sending from the server  
 - Inventing employers, metrics, or tools not present in the user profile  
 - Rewriting the whole CV from scratch when tagged bullets already exist  
@@ -42,8 +42,8 @@ If a feature does not tighten this path or increase willingness to pay, do not b
 ## Preferred patterns
 
 - Deterministic assemble first; LLM polish optional and constrained by `playbook/rewrite-rules.md`  
-- Job/recruiter **intake** via paste, CSV, or green-tier public APIs (`docs/sources.yaml`)  
-- Adapter interfaces inspired by entrep scrapers — **without** copying red-tier LinkedIn tactics  
+- Job intake: **URL → local LinkedIn session** (Warm Bridge pattern) with paste/CSV fallback (`docs/LINKEDIN_JOB_SESSION.md`)  
+- Adapter interfaces inspired by entrep / warm-bridge — yellow session ≠ red harvester  
 
 ## Skills (project)
 

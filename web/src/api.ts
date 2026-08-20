@@ -87,9 +87,48 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || res.statusText);
+    let detail = text || res.statusText;
+    try {
+      const j = JSON.parse(text) as { detail?: string };
+      if (j?.detail) detail = typeof j.detail === "string" ? j.detail : text;
+    } catch {
+      /* plain text */
+    }
+    throw new Error(`${res.status}: ${detail}`);
   }
   return res.json() as Promise<T>;
+}
+
+export function fetchSessionStatus() {
+  return api<{
+    ok: boolean;
+    chrome_ok: boolean; // alias of camoufox_ok (back-compat)
+    camoufox_ok?: boolean;
+    logged_in_hint: boolean;
+    ready: boolean;
+    hint: string;
+    engine?: string;
+    user_data_dir?: string;
+  }>("/api/session-status");
+}
+
+/** Opens Camoufox for LinkedIn login; may take several minutes. */
+export function openLinkedInSession() {
+  return api<{
+    ok: boolean;
+    logged_in: boolean;
+    hint: string;
+    after?: {
+      chrome_ok: boolean;
+      camoufox_ok?: boolean;
+      logged_in_hint: boolean;
+      ready: boolean;
+      hint: string;
+    };
+  }>("/api/linkedin-session", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
 }
 
 export function loadExampleProfile() {
@@ -106,6 +145,149 @@ export function parseJob(raw: string, source = "paste") {
     method: "POST",
     body: JSON.stringify({ raw, source }),
   });
+}
+
+export type RoleInsights = {
+  angle: string;
+  angle_score: number;
+  angle_rationale: string;
+  top_angles: { angle: string; score: number }[];
+  bullets: string[];
+  gaps: string[];
+  intake_nudge: string;
+};
+
+export type MapJobResult = {
+  ok: boolean;
+  job: {
+    title: string;
+    company: string;
+    description: string;
+    source: string;
+    locale_hint: string | null;
+  };
+  insights: RoleInsights;
+  meta: { source: string; url: string; mock: boolean };
+};
+
+export function mapJob(body: {
+  url: string;
+  profile?: Profile | null;
+  mock?: boolean | null;
+  locale?: string;
+}) {
+  return api<MapJobResult>("/api/map-job", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export type SuggestedRole = {
+  id: string;
+  title: string;
+  kind: string;
+  why: string;
+  linkedin_url: string;
+};
+
+export type MapProfileResult = {
+  ok: boolean;
+  snapshot: {
+    name?: string;
+    headline?: string;
+    location?: string;
+    about?: string;
+    experience_text?: string;
+    linkedin_url?: string;
+  };
+  profile: Profile;
+  suggested_roles?: SuggestedRole[];
+  meta: { source: string; url: string; mock: boolean };
+};
+
+export function mapProfile(body: {
+  url: string;
+  mock?: boolean | null;
+  stub?: boolean;
+}) {
+  return api<MapProfileResult>("/api/map-profile", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export type JobOpening = {
+  id: string;
+  title: string;
+  company: string;
+  blurb: string;
+  description: string;
+  linkedin_url: string;
+  sample: boolean;
+};
+
+export function suggestOpenings(body: {
+  role_titles?: string[];
+  keywords?: string;
+  location?: string;
+  limit?: number;
+}) {
+  return api<{ ok: boolean; openings: JobOpening[]; note: string }>(
+    "/api/suggest-openings",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+}
+
+export function suggestRoles(body: {
+  profile: Profile | null;
+  headline?: string;
+  location?: string;
+  limit?: number;
+}) {
+  return api<{ ok: boolean; roles: SuggestedRole[] }>("/api/suggest-roles", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export type SamplePackResult = {
+  ok: boolean;
+  job: MapJobResult["job"];
+  insights: RoleInsights;
+  pack: TailorResult;
+  linkedin_search_url: string;
+  meta: { source: string; mock: boolean; role_title: string };
+};
+
+export function samplePack(body: {
+  profile: Profile | null;
+  role_title: string;
+  locale?: string;
+}) {
+  return api<SamplePackResult>("/api/sample-pack", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function jobInsights(body: {
+  raw?: string;
+  title?: string;
+  company?: string;
+  profile?: Profile | null;
+  locale?: string;
+  source?: string;
+}) {
+  return api<{ ok: boolean; job: MapJobResult["job"]; insights: RoleInsights }>(
+    "/api/job-insights",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
 }
 
 export function tailor(body: {
@@ -217,6 +399,7 @@ export function fetchToday(body: {
 
 // Re-exports for callers that used api.ts storage helpers
 export {
+  clearLocalWorkspace,
   loadStoredProfile,
   storeProfile,
 } from "./store";

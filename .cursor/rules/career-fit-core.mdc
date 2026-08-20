@@ -29,14 +29,14 @@ Wedge first. Ecosystem map in `docs/ECOSYSTEM.md`. Do not build features outside
 
 ## Hard bans
 
-- Automated LinkedIn scraping/harvesting in this public repo  
+- Multi-account / password-in-API LinkedIn **harvest** (red) — session job URL map is yellow OK  
 - Inventing resume facts  
 - Mass-sending messages on the user’s behalf from our servers  
 
 ## Prefer
 
 - Deterministic tailor + playbook rules  
-- Paste/CSV/green-tier sources (`docs/sources.yaml`)  
+- Job URL → local LinkedIn session (Warm Bridge) + paste fallback (`docs/sources.yaml`)  
 - Tracker skill for pipeline/Home/Free gates (`career-fit-tracker`)  
 - Small conventional commits  
 - Update `docs/AI_BUILD_MAP.md` when modules/routes/views change  

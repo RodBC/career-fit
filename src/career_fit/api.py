@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import yaml
@@ -8,8 +9,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from .angle import classify_angle
+from .insights import build_role_insights
 from .intake import build_profile_from_intake, parse_resume_text
 from .jobs import parse_job_text
+from .linkedin_browser import (
+    BrowserJobError as SeleniumJobError,
+    map_job_url,
+    map_profile_url,
+    parsed_as_dict,
+    run_linkedin_login_session,
+    search_job_openings,
+    session_ready_report,
+)
+from .linkedin_browser.mock import mock_job_text_for_role
 from .models import ROOT, Job, load_yaml
 from .outreach import build_outreach
 from .recruiters import (
@@ -19,6 +31,7 @@ from .recruiters import (
     parse_contacts_text,
 )
 from .render import render_latex, render_markdown
+from .suggest_roles import linkedin_jobs_search, suggest_roles_from_profile
 from .tailor import tailor
 from .tracker import (
     build_application_from_tailor,
@@ -101,6 +114,39 @@ class TodayRequest(BaseModel):
     dismissed_ids: list[str] = []
 
 
+class MapJobRequest(BaseModel):
+    url: str = ""
+    profile: dict[str, Any] | None = None
+    mock: bool | None = None
+    locale: str | None = None
+
+
+class MapProfileRequest(BaseModel):
+    url: str = ""
+    mock: bool | None = None
+    stub: bool = False
+
+
+class SuggestRolesRequest(BaseModel):
+    profile: dict[str, Any] | None = None
+    headline: str = ""
+    location: str = ""
+    limit: int = 4
+
+
+class SuggestOpeningsRequest(BaseModel):
+    role_titles: list[str] = []
+    keywords: str = ""
+    location: str = ""
+    limit: int = 6
+
+
+class SamplePackRequest(BaseModel):
+    profile: dict[str, Any] | None = None
+    role_title: str = ""
+    locale: str | None = None
+
+
 def _default_profile() -> dict[str, Any]:
     path = ROOT / "data" / "profile.yaml"
     if not path.exists():
@@ -148,6 +194,236 @@ def api_parse_job(payload: dict[str, str]) -> dict[str, Any]:
         "description": parsed.description,
         "source": parsed.source,
         "locale_hint": parsed.locale_hint,
+    }
+
+
+@app.post("/api/map-job")
+def api_map_job(req: MapJobRequest) -> dict[str, Any]:
+    """Job URL → session/mock JD → parse → role insights."""
+    try:
+        mapped = map_job_url(req.url, mock=req.mock)
+    except SeleniumJobError as e:
+        raise HTTPException(e.status, str(e)) from e
+    parsed = mapped["parsed"]
+    locale = req.locale or parsed.locale_hint or "en"
+    insights = build_role_insights(
+        parsed.title,
+        parsed.company,
+        parsed.description,
+        profile=req.profile,
+        locale=locale,
+    )
+    return {
+        "ok": True,
+        "job": parsed_as_dict(parsed),
+        "insights": insights,
+        "meta": mapped["meta"],
+    }
+
+
+@app.post("/api/map-profile")
+def api_map_profile(req: MapProfileRequest) -> dict[str, Any]:
+    """Candidate LinkedIn URL → session/mock/stub snapshot → light profile draft."""
+    try:
+        mapped = map_profile_url(req.url, mock=req.mock, stub=req.stub)
+    except SeleniumJobError as e:
+        raise HTTPException(e.status, str(e)) from e
+    profile = mapped["profile"]
+    snap = mapped["snapshot"]
+    roles = suggest_roles_from_profile(
+        profile,
+        headline=str(snap.get("headline") or ""),
+        location=str(snap.get("location") or ""),
+        limit=4,
+    )
+    return {
+        "ok": True,
+        "snapshot": snap,
+        "profile": profile,
+        "suggested_roles": roles,
+        "meta": mapped["meta"],
+    }
+
+
+@app.post("/api/suggest-roles")
+def api_suggest_roles(req: SuggestRolesRequest) -> dict[str, Any]:
+    profile = req.profile or _default_profile()
+    roles = suggest_roles_from_profile(
+        profile,
+        headline=req.headline,
+        location=req.location,
+        limit=max(1, min(req.limit, 6)),
+    )
+    return {"ok": True, "roles": roles}
+
+
+@app.get("/api/session-status")
+def api_session_status() -> dict[str, Any]:
+    return {"ok": True, **session_ready_report()}
+
+
+@app.post("/api/linkedin-session")
+def api_linkedin_session() -> dict[str, Any]:
+    """Open Camoufox for one-time LinkedIn login (blocks until feed or ~5 min)."""
+    try:
+        return run_linkedin_login_session(wait_sec=300)
+    except SeleniumJobError as e:
+        raise HTTPException(e.status, str(e)) from e
+
+
+@app.post("/api/suggest-openings")
+def api_suggest_openings(req: SuggestOpeningsRequest) -> dict[str, Any]:
+    """Live LinkedIn openings only — skip incomplete cards; never invent employers."""
+    titles: list[str] = [t.strip() for t in req.role_titles if t and str(t).strip()]
+    kw = (req.keywords or "").strip()
+    if kw:
+        for part in re.split(r"[,;\n]+", kw):
+            p = part.strip()
+            if p and p.lower() not in {t.lower() for t in titles}:
+                titles.append(p)
+    if not titles:
+        raise HTTPException(
+            400,
+            "Provide role titles or keywords to search real LinkedIn jobs.",
+        )
+    # Search the strongest signal first (joined keywords), then fill from singles
+    primary = " OR ".join(titles[:3]) if len(titles) > 1 else titles[0]
+    # LinkedIn search uses space-separated keywords better than OR in many locales
+    primary = " ".join(titles[:2])
+    limit = max(1, min(req.limit, 8))
+    try:
+        result = search_job_openings(
+            primary,
+            location=req.location or "",
+            limit=limit,
+        )
+    except SeleniumJobError as e:
+        raise HTTPException(e.status, str(e)) from e
+    openings = result["openings"]
+    # If thin results, try next title (still live only)
+    if len(openings) < min(3, limit) and len(titles) > 1:
+        for title in titles[1:]:
+            if len(openings) >= limit:
+                break
+            try:
+                more = search_job_openings(
+                    title,
+                    location=req.location or "",
+                    limit=limit - len(openings),
+                )
+            except SeleniumJobError:
+                break
+            seen = {o["linkedin_url"] for o in openings}
+            for o in more["openings"]:
+                if o["linkedin_url"] not in seen:
+                    openings.append(o)
+                    seen.add(o["linkedin_url"])
+    if not openings:
+        raise HTTPException(
+            503,
+            "No complete LinkedIn job cards found (bad/empty postings skipped). "
+            "Paste a jobs/view URL, or run: career-fit linkedin-session",
+        )
+    return {
+        "ok": True,
+        "openings": openings[:limit],
+        "note": (
+            "Live LinkedIn openings — incomplete or unavailable links were skipped. "
+            "Paste another jobs/view URL anytime."
+        ),
+        "meta": result.get("meta") or {},
+    }
+
+
+@app.post("/api/sample-pack")
+def api_sample_pack(req: SamplePackRequest) -> dict[str, Any]:
+    """Profile + role title → mock JD → insights → tailor pack (dogfood loop)."""
+    profile = req.profile or _default_profile()
+    title = (req.role_title or "").strip() or "Software Engineer"
+    raw = mock_job_text_for_role(title)
+    parsed = parse_job_text(raw, source="mock")
+    # Prefer the requested title over parser guess
+    job_title = title or parsed.title
+    company = parsed.company or "Northwind Analytics"
+    description = parsed.description or raw
+    locale = req.locale or parsed.locale_hint or "en"
+    insights = build_role_insights(
+        job_title,
+        company,
+        description,
+        profile=profile,
+        locale=locale,
+    )
+    job = Job(
+        title=job_title,
+        company=company,
+        description=description,
+        locale=locale,
+    )
+    angle = insights.get("angle") or classify_angle(job).angle
+    resume = tailor(profile, job, angle)
+    company_msg = build_outreach(profile, job, resume)
+    city = str((profile.get("identity") or {}).get("city") or "")
+    return {
+        "ok": True,
+        "job": {
+            "title": job_title,
+            "company": company,
+            "description": description,
+            "source": "mock",
+            "locale_hint": locale,
+        },
+        "insights": insights,
+        "pack": {
+            "angle": angle,
+            "locale": resume.locale,
+            "markdown": render_markdown(resume),
+            "latex": render_latex(resume),
+            "company_message": company_msg,
+            "summary": resume.summary,
+            "proof": (
+                resume.projects[0]["bullets"][0]
+                if resume.projects and resume.projects[0].get("bullets")
+                else ""
+            ),
+            "project_name": (resume.projects[0]["name"] if resume.projects else ""),
+        },
+        "linkedin_search_url": linkedin_jobs_search(job_title, city),
+        "meta": {"source": "sample_pack", "mock": True, "role_title": title},
+    }
+
+
+@app.post("/api/job-insights")
+def api_job_insights(payload: dict[str, Any]) -> dict[str, Any]:
+    """Insights from already-pasted JD text (fallback path)."""
+    raw = (payload.get("raw") or payload.get("description") or "").strip()
+    title = (payload.get("title") or "").strip()
+    company = (payload.get("company") or "").strip()
+    if not raw and not title:
+        raise HTTPException(400, "job text or title required")
+    if raw and (not title or not company):
+        parsed = parse_job_text(raw, source=payload.get("source") or "paste")
+        title = title or parsed.title
+        company = company or parsed.company
+        raw = raw or parsed.description
+    locale = payload.get("locale") or "en"
+    insights = build_role_insights(
+        title,
+        company,
+        raw,
+        profile=payload.get("profile"),
+        locale=locale,
+    )
+    return {
+        "ok": True,
+        "job": {
+            "title": title,
+            "company": company,
+            "description": raw,
+            "source": payload.get("source") or "paste",
+            "locale_hint": None,
+        },
+        "insights": insights,
     }
 
 
@@ -282,8 +558,8 @@ def api_tracker_limits() -> dict[str, Any]:
 
 @app.post("/api/tracker/save-application")
 def api_save_application(req: SaveApplicationRequest) -> dict[str, Any]:
-    if not (req.markdown or req.latex or req.company_message):
-        raise HTTPException(400, "Generate a tailored pack before saving")
+    if not (req.title or req.company or req.job_description):
+        raise HTTPException(400, "Need a role title, company, or job description to save")
     bundle = build_application_from_tailor(
         title=req.title,
         company=req.company,

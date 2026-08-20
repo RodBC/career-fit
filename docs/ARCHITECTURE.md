@@ -18,54 +18,45 @@ The hard IP is already here: multi-angle resume reframing without AI smell. Ever
 | **P0** | ~~Guided intake (profile form + resume upload)~~ ✅ | Ecosystem starts with a rich career graph |
 | **P0** | ~~App shell + Phase B pipeline/people + soft Pro~~ ✅ | Retention + WTP |
 | **P0** | AI context discipline (`AGENTS.md` + `docs/context/`) | Multi-agent production speed |
+| **P0** | Job URL → session map → role insights (Craft) | Warm Bridge pattern; paste is fallback |
 | **P1** | Per-angle bullet tagging after intake | Intake currently mirrors facts across angles |
+| **P1** | Live Selenium job DOM harden + Gupy/inHire URL | After mock UX dogfoods |
 | **P1** | Import tagged profile from private corpus | Founder becomes power user |
-| **P1** | Job paste adapters (LinkedIn / Gupy / inHire **text**) | Normalize paste → fields |
-| **P1** | `JobSource` / `ContactSource` protocols | Entrep-style adapters; paste/CSV first |
+| **P1** | `JobSource` / `ContactSource` protocols | Session + paste + CSV backends |
 | **P2** | Richer suggestion engine (Phase C full) | Courses, posts, projects, people, hackathons |
 | **P2** | Optional LLM polish + interview prep; PDF parse | After deterministic assemble is solid |
-| **Later** | Auth + Stripe; network bridges; green/yellow feeds | Never red-tier LinkedIn harvest |
+| **Later** | Auth + Stripe; network bridges; partner APIs | Prefer OAuth when available |
 
-Ecosystem map: `docs/ECOSYSTEM.md`. Source policy: `docs/sources.yaml`. Entrep review: `docs/entrep-transfer.md`.
+Ecosystem map: `docs/ECOSYSTEM.md`. Source policy: `docs/sources.yaml`. Session how-to: `docs/LINKEDIN_JOB_SESSION.md`.
 
+## LinkedIn intake — owner lock (2026-08-19)
 
-
-## LinkedIn scraping — critical take
-
-**Do not ship an automated LinkedIn scraper in the public core.**
-
-Reasons:
-
-1. **ToS** — automated collection of LinkedIn profiles/jobs violates LinkedIn’s user agreement; a public GitHub scraper invites bans, DMCA/ToS complaints, and account loss for users.
-2. **Fragility** — LinkedIn actively breaks scrapers (auth walls, captchas, DOM churn). Maintenance cost explodes; product looks broken weekly.
-3. **Wrong moat** — Competitors can copy a scraper. They cannot easily copy your **angle playbook + anti-AI rewrite craft**.
-4. **Legal/reputation risk** for a public product aimed at job seekers.
-
-### What we do instead (same user outcome)
+Aligned with Warm Bridge: **yellow session Selenium is primary** for job URLs the candidate chooses. **Red** = multi-account / password-in-API / mass harvest.
 
 | Need | Approach in Career Fit |
 |------|-------------------------|
-| Find jobs | User pastes JD (LinkedIn / Gupy / inHire). Later: optional **public** job-board RSS/APIs, never session hijacking. |
-| Find recruiters at company | User pastes recruiter list / profile “About” / CSV export they obtained themselves. UI ranks titles (Recruiter, TA, Hiring Manager). |
-| Email from About | Parser extracts `mailto` / obvious emails from **user-provided** profile text. |
-| Scale later | Private **browser-assisted** capture (user logged in, user initiates) or official partner APIs — never a headless harvester in OSS. |
+| Map a job | Paste **job URL** → local Chrome LinkedIn session → JD text → insights → tailor (`linkedin_selenium_job`) |
+| Offline / CI | `CAREER_FIT_SELENIUM_MOCK=1` or Craft “Use mock JD” |
+| Session down | Paste full JD (`user_paste_jd`) |
+| Recruiters | Paste cards/CSV; session people scrape later if needed |
+| Never | Invent JD or resume facts; headless blast; mass DM |
 
-Gupy / inHire remain useful as **paste sources** (and later public listing adapters). LinkedIn stays primary for **people**, but people enter the app via **user-controlled** input.
+Moat remains angle playbook + anti-AI craft — session map is distribution, not the IP.
 
 ## System sketch
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌────────────────────┐
-│  Vite web   │────▶│  FastAPI     │────▶│  career_fit core   │
-│  upload/paste│     │  /tailor     │     │  angle→assemble    │
-│  recruiters  │     │  /recruiters │     │  outreach messages │
-└─────────────┘     └──────────────┘     └────────────────────┘
+┌─────────────┐     ┌──────────────┐     ┌────────────────────────────┐
+│  Vite Craft │────▶│  FastAPI     │────▶│  map-job → insights →      │
+│  URL / paste│     │  /map-job    │     │  angle → tailor → outreach │
+│  Home shell │     │  /tailor     │     │  tracker shapes            │
+└─────────────┘     └──────────────┘     └────────────────────────────┘
 ```
 
 ## Non-goals (for now)
 
-- Headless LinkedIn/Gupy login automation  
-- Mass DM sending from the app (user sends manually — safer, more human)  
+- Multi-account / password-in-API LinkedIn farming (red)  
+- Mass DM sending from the app (user sends manually)  
 - Claiming “AI applies for you”  
 
 Manual send is a feature: quality over spray.

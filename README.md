@@ -10,20 +10,7 @@ Career Fit is a SaaS. The **wedge** is proven:
 4. Draft short messages to recruiters / hiring managers  
 5. You send. We do not spray.
 
-The **ecosystem** we are building next:
-
-- Track applied jobs, recruiters reached, and network people who can help  
-- Advance your curriculum (skills, projects, signal)  
-- Keep suggesting: post topics, courses, recruiters, peers, hackathons, projects  
-- All behind a **friendly, guided UI/UX** — calm home, sharp next actions  
-
-Full map: [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md). Everything we ship either strengthens the wedge→ecosystem path or is cut.
-
-## The problem we solve
-
-Mass applications lose. Personalized reach-out wins — but doing it by hand does not scale, and generic AI CVs get ignored. After the first message, candidates still lack a system: who did I contact? what should I learn? who in my network can open a door?
-
-We productize the craft **and** the ongoing operating rhythm.
+Full map: [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md).
 
 ## What ships today (local MVP)
 
@@ -32,38 +19,54 @@ We productize the craft **and** the ongoing operating rhythm.
 | Multi-angle resume playbook | ✅ |
 | Deterministic tailor (no LLM required) | ✅ |
 | Guided profile + resume intake | ✅ |
+| Job URL → public HTTP / Camoufox map + role insights | ✅ |
+| Guest-first Camoufox + warm burner session (headless) | ✅ |
+| Ops burner login + Gmail IMAP App Password OTP | ✅ |
 | Home shell + pipeline + people tracker | ✅ |
-| Today coach (max 3) + soft Free/Pro ($29) | ✅ |
+| Today coach + soft Free/Pro ($29) | ✅ |
 | Recruiter paste → ranked drafts | ✅ |
 | Vite UI + FastAPI | ✅ |
-| Per-angle tagging / Stripe / network bridges | 🧭 next / later |
-| Automated LinkedIn scraping | ❌ by design |
+| Stripe / network graph | 🧭 later |
+| Mass LinkedIn harvest / end-user password-in-API | ❌ red |
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -e .
-career-fit serve          # API :8787
-cd web && npm i && npm run dev   # UI :5173
+pip install -e ".[linkedin]"
+python -m camoufox fetch
+cd web && npm i && cd ..
+
+career-fit dev            # API :8787 + UI :5173
+# open http://127.0.0.1:5173 — only UI the founder should see
 ```
+
+Camoufox stays **headless** on the product path. Ops cold start:
+
+```bash
+# paste LinkedIn email/password + Gmail App Password (16 chars) to the agent
+career-fit linkedin-burner-login   # headless + IMAP OTP
+career-fit session-status
+```
+
+See [`docs/LINKEDIN_JOB_SESSION.md`](docs/LINKEDIN_JOB_SESSION.md) (aligned with warm-bridge).
 
 ## Non-negotiables
 
 - **Moat = playbook quality + career graph**, not scrapers.  
-- **No headless LinkedIn harvester** in the public product. Paste / user-assisted capture / official APIs only.  
-- **You send / you post** — we draft and track; we do not spray.  
-- **AIs working on this repo must read and update context** — see [`AGENTS.md`](AGENTS.md).
+- **No headless LinkedIn harvester** / multi-account farm.  
+- **You send / you post** — we draft and track.  
+- **AIs must read/update context** — [`AGENTS.md`](AGENTS.md).
 
-## Docs map (start here if you are an AI)
+## Docs map (AIs start here)
 
 | Doc | Purpose |
 |-----|---------|
 | [`AGENTS.md`](AGENTS.md) | Mandatory AI operating contract |
-| [`docs/context/CURRENT.md`](docs/context/CURRENT.md) | Live product state — **read first, update last** |
-| [`docs/AI_BUILD_MAP.md`](docs/AI_BUILD_MAP.md) | Commit ledger + file/module ownership — **how / where / why** |
+| [`docs/context/CURRENT.md`](docs/context/CURRENT.md) | Live product state |
+| [`docs/AI_BUILD_MAP.md`](docs/AI_BUILD_MAP.md) | Commit ledger + module ownership |
+| [`docs/LINKEDIN_JOB_SESSION.md`](docs/LINKEDIN_JOB_SESSION.md) | Camoufox + burner OTP |
 | [`docs/PRODUCT.md`](docs/PRODUCT.md) | SaaS vision, tiers, moat |
-| [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) | Tracker + coach + UI/UX end-state |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Build order & technical constraints |
-| [`docs/entrep-transfer.md`](docs/entrep-transfer.md) | What we reuse (and reject) from `/entrep` |
+| [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) | Tracker + coach end-state |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Build order |
 | [`playbook/`](playbook/) | Angle IP & anti-AI-smell rules |
 
 ## License

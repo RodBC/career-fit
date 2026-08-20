@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  clearLocalWorkspace,
   fetchLimits,
   loadExampleProfile,
   loadStoredProfile,
@@ -7,7 +8,7 @@ import {
 } from "./api";
 import Craft from "./Craft";
 import Home from "./Home";
-import Intake from "./Intake";
+import Intake, { type SeedJob } from "./Intake";
 import type { Application } from "./store";
 
 type View = "home" | "intake" | "craft";
@@ -21,41 +22,73 @@ export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLabel, setProfileLabel] = useState("No profile loaded");
   const [seedApp, setSeedApp] = useState<Application | null>(null);
+  const [seedJob, setSeedJob] = useState<SeedJob | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [apiNote, setApiNote] = useState("");
-  const [proBlurb, setProBlurb] = useState("");
-  const [proPrice, setProPrice] = useState(29);
 
   useEffect(() => {
-    fetchLimits()
-      .then((l) => {
-        setProBlurb(l.pro_blurb);
-        setProPrice(l.pro_price_usd);
-      })
-      .catch(() => undefined);
+    fetchLimits().catch(() => undefined);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("fresh") === "1") {
+      clearLocalWorkspace();
+      window.history.replaceState({}, "", window.location.pathname);
+      setProfile(null);
+      setProfileLabel("No profile loaded");
+      setSeedJob(null);
+      setView("intake");
+      setApiNote("Fresh start — paste your LinkedIn URL");
+      loadExampleProfile()
+        .then(() => setApiNote("API online — paste your LinkedIn URL"))
+        .catch(() => setApiNote("API offline — start with: career-fit serve"));
+      return;
+    }
 
     const stored = loadStoredProfile();
     if (stored && profileName(stored)) {
       setProfile(stored);
-      setProfileLabel(`Saved intake: ${profileName(stored)}`);
+      setProfileLabel(`Saved · ${profileName(stored)}`);
       setView("home");
       return;
     }
     loadExampleProfile()
-      .then(() => setApiNote("API online — complete intake to begin"))
+      .then(() => setApiNote("API online — paste your LinkedIn URL"))
       .catch(() => setApiNote("API offline — start with: career-fit serve"));
   }, []);
 
-  function applyProfile(p: Profile, label: string) {
+  function applyProfile(
+    p: Profile,
+    label: string,
+    opts?: { jobSearchUrl?: string; seedJob?: SeedJob | null },
+  ) {
     setProfile(p);
     setProfileLabel(label);
-    setView("home");
+    setSeedJob(opts?.seedJob || null);
+    setSeedApp(null);
+    setView(opts?.seedJob?.saved && !opts?.seedJob?.pack ? "home" : "craft");
     setRefreshKey((k) => k + 1);
   }
 
   function goCraft(app?: Application) {
     setSeedApp(app || null);
+    if (app) setSeedJob(null);
     setView("craft");
+  }
+
+  function goStart() {
+    setSeedApp(null);
+    setSeedJob(null);
+    setView("intake");
+  }
+
+  function eraseAndRestart() {
+    clearLocalWorkspace();
+    setProfile(null);
+    setProfileLabel("No profile loaded");
+    setSeedApp(null);
+    setSeedJob(null);
+    setView("intake");
+    setApiNote("Saved intake erased — paste your LinkedIn URL");
   }
 
   return (
@@ -80,9 +113,9 @@ export default function App() {
           <button
             type="button"
             className={`nav-pill ${view === "intake" ? "on" : ""}`}
-            onClick={() => setView("intake")}
+            onClick={goStart}
           >
-            Intake
+            Start
           </button>
           <button
             type="button"
@@ -91,6 +124,14 @@ export default function App() {
             onClick={() => goCraft()}
           >
             Craft
+          </button>
+          <button
+            type="button"
+            className="nav-pill"
+            onClick={eraseAndRestart}
+            title="Clear localStorage profile and restart"
+          >
+            Fresh
           </button>
         </nav>
       </header>
@@ -101,6 +142,7 @@ export default function App() {
         <Intake
           initial={profile}
           onComplete={applyProfile}
+          onCleared={eraseAndRestart}
           onCancel={profile ? () => setView("home") : undefined}
         />
       )}
@@ -109,10 +151,8 @@ export default function App() {
         <Home
           profile={profile}
           profileLabel={profileLabel}
-          limitsBlurb={proBlurb}
-          proPrice={proPrice}
           onCraft={goCraft}
-          onIntake={() => setView("intake")}
+          onIntake={goStart}
           refreshKey={refreshKey}
         />
       )}
@@ -122,11 +162,12 @@ export default function App() {
           profile={profile}
           profileLabel={profileLabel}
           seedApp={seedApp}
+          seedJob={seedJob}
           onProfile={(p, label) => {
             setProfile(p);
             setProfileLabel(label);
           }}
-          onIntake={() => setView("intake")}
+          onIntake={goStart}
           onHome={() => {
             setRefreshKey((k) => k + 1);
             setView("home");
@@ -136,9 +177,8 @@ export default function App() {
       )}
 
       <p className="footer-note">
-        You send messages manually. We draft and track. See{" "}
-        <code>docs/AI_BUILD_MAP.md</code> · Pro working price ${proPrice}/mo
-        (soft gate).
+        You send messages manually. We draft and track. Fresh start:{" "}
+        <a href="/?fresh=1">/?fresh=1</a>
       </p>
     </div>
   );

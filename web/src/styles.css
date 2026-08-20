@@ -304,6 +304,31 @@ textarea.tall {
   border-radius: 0 8px 8px 0;
 }
 
+.session-banner {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.15rem;
+  background: #fffdf8;
+}
+
+.session-banner.session-ok {
+  border-color: #9bc4b0;
+  background: #f0f7f3;
+}
+
+.session-banner.session-warn {
+  border-color: #e0c4a8;
+  background: #fbf6f0;
+}
+
+.session-banner-title {
+  margin: 0;
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
 .footer-note {
   margin-top: 1.5rem;
   color: var(--muted);
@@ -612,8 +637,90 @@ textarea.tall {
   margin: 0 0 0.4rem;
 }
 
-.intake-step {
-  transition: border-color 0.2s ease, color 0.2s ease;
+.insights-panel {
+  margin: 0.85rem 0 1rem;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid var(--ink);
+  background: rgba(20, 28, 26, 0.04);
+  border-radius: 0 10px 10px 0;
+}
+
+.insights-panel h3 {
+  margin: 0 0 0.45rem;
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.insights-panel ul {
+  margin: 0.35rem 0 0.6rem;
+  padding-left: 1.15rem;
+}
+
+.insights-panel li {
+  margin: 0.25rem 0;
+  line-height: 1.4;
+}
+
+.insights-panel ul.gaps li {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.journey-hero {
+  max-width: 32rem;
+}
+
+.journey-headline {
+  margin: 0 0 1rem;
+  font-family: var(--display);
+  font-size: 1.2rem;
+  line-height: 1.35;
+}
+
+.role-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.role-card {
+  padding: 0.85rem 1rem;
+  border-left: 3px solid rgba(20, 28, 26, 0.2);
+  background: rgba(20, 28, 26, 0.03);
+  border-radius: 0 10px 10px 0;
+}
+
+.role-card.yes {
+  border-left-color: var(--accent);
+  background: rgba(15, 92, 76, 0.07);
+}
+
+.role-card.no {
+  opacity: 0.55;
+}
+
+.role-card h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.15rem;
+}
+
+.role-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.role-link {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.92rem;
+}
+
+.intake-body .field input[type="url"] {
+  font-size: 1.05rem;
 }
 
 .meta {

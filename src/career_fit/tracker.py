@@ -216,8 +216,11 @@ def generate_today_cards(
         cards.append(
             TodayCard(
                 id=f"today_send_{a['id']}",
-                title=f"Send your message for {a.get('company') or a.get('title')}",
-                why=f"You have a tailored pack ready ({STAGE_HUMAN.get(a.get('stage', ''), 'saved')}).",
+                title=f"Send outreach for {a.get('company') or a.get('title')}",
+                why=(
+                    "Pack just saved — copy the company message and send it yourself. "
+                    f"({STAGE_HUMAN.get(a.get('stage', ''), 'Ready to send')})"
+                ),
                 action="craft",
                 application_id=a.get("id"),
             )

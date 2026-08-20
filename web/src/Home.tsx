@@ -5,7 +5,6 @@ import {
   loadApplications,
   loadDismissedToday,
   loadOutreach,
-  loadUsage,
   type Application,
   type OutreachRecord,
   type Stage,
@@ -25,8 +24,6 @@ const STAGE_LABEL: Record<Stage, string> = {
 type Props = {
   profile: Profile | null;
   profileLabel: string;
-  limitsBlurb: string;
-  proPrice: number;
   onCraft: (app?: Application) => void;
   onIntake: () => void;
   onPeopleFocus?: () => void;
@@ -36,8 +33,6 @@ type Props = {
 export default function Home({
   profile,
   profileLabel,
-  limitsBlurb,
-  proPrice,
   onCraft,
   onIntake,
   refreshKey,
@@ -46,7 +41,6 @@ export default function Home({
   const [people, setPeople] = useState<OutreachRecord[]>([]);
   const [cards, setCards] = useState<TodayCard[]>([]);
   const [savedFlash, setSavedFlash] = useState("");
-  const usage = loadUsage();
   const name =
     (profile?.identity as { name?: string } | undefined)?.name || "there";
 
@@ -107,7 +101,7 @@ export default function Home({
             {apps.length ? "Continue crafting" : "Add a role"}
           </button>
           <button type="button" className="btn secondary" onClick={onIntake}>
-            Edit intake
+            Your profile
           </button>
         </div>
         {savedFlash && <p className="status ok save-flash">{savedFlash}</p>}
@@ -244,18 +238,6 @@ export default function Home({
           </ul>
         )}
       </section>
-
-      <aside className="pro-panel">
-        <p>
-          Free this month: {usage.tailor_count} tailor
-          {usage.tailor_count === 1 ? "" : "s"} used · pipeline {apps.length}{" "}
-          roles.
-        </p>
-        <p className="hint">{limitsBlurb || `Pro ($${proPrice}/mo) unlocks unlimited craft + full memory.`}</p>
-        {usage.pro_requested && (
-          <p className="status ok">Pro interest noted — billing comes after the loop feels sticky.</p>
-        )}
-      </aside>
     </div>
   );
 }

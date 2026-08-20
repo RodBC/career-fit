@@ -21,8 +21,12 @@ History is short and intentional. Treat each commit as a **layer**, not a random
 | `f89082d` | `docs: lock ecosystem vision for career CRM and coach loop` | **North-star expansion** | Document Phase B/C (tracker + suggestions) so agents plan retention without boiling the ocean before the wedge converts. |
 | `92c8048` | `feat: guided profile intake and AI build map` | **Phase A intake** | Form + rules-first resume parse → tailor-ready profile; `AI_BUILD_MAP` for agents. |
 | `ec9cfcd` | `feat: Home shell, pipeline tracker, and soft Pro gates` | **Phase B + soft monetization** | App shell Home/Intake/Craft; applications/outreach localStorage; Today cards; Free limits; Pro $29. |
+| *(pending)* | `feat: job URL session map + role insights` | **Warm Bridge-aligned intake** | Yellow LinkedIn session primary for job URLs; Craft URL-first; insights before tailor; paste fallback. |
+| *(pending)* | `feat: journey sample pack + dogfood harden` | **Minimum-input loop** | Live→mock Start CTA; roles → `/api/sample-pack` into Craft; session yaml + Fresh always on. |
+| *(pending)* | `feat: in-product LinkedIn session unlock + wedge aha` | **Sticky real-data wedge** | Start session banner + `/api/linkedin-session`; paste-first when empty; Craft message-first + Today send outreach. |
+| *(pending)* | `feat: Camoufox LinkedIn browser + burner OTP` | **Camoufox stack** | Replace Selenium; guest-first + XHR intercept; ops burner + Gmail IMAP App Password OTP (warm-bridge-aligned); `linkedin_browser` owns ingest. |
 
-**Invariant across all layers:** paste/CSV intake · deterministic tailor first · user sends messages · no LinkedIn harvester in public core.
+**Invariant across all layers:** user-chosen URLs via **session** (yellow) or paste/CSV · deterministic tailor first · user sends messages · no red-tier mass harvest.
 
 When you add a meaningful feature, **extend this ledger** in the same table (one row, commit hash after push if known).
 
@@ -35,7 +39,7 @@ playbook/ + profile/ + corpus/ + prompts/     ← IP & rules (edit carefully)
         ↓
 src/career_fit/{models,angle,tailor,render,outreach}   ← assemble path
         ↓
-src/career_fit/{jobs,recruiters,intake,tracker}  ← paste + career CRM shapes
+src/career_fit/{jobs,recruiters,intake,tracker,insights,linkedin_browser}  ← paste + Camoufox map + CRM
         ↓
 src/career_fit/{cli,api}                     ← entrypoints (same core)
         ↓
@@ -83,11 +87,14 @@ Private corpus (not in this repo): `/home/decastro/studies/curriculumn` — LaTe
 | `render.py` | Emit markdown + LaTeX | `render_markdown`, `render_latex` | Presentation only |
 | `outreach.py` | Company-level short message | `build_outreach` | One generic HM/company draft from proof |
 | `jobs.py` | JD paste → fields | `parse_job_text`, `ParsedJob` | Normalize LinkedIn/Gupy/inHire **text** without fetch |
+| `linkedin_browser/` | Job URL → JD via Camoufox (guest → warm → ops burner) | `map_job_url`, `fetch_*`, `bootstrap_burner_session` | Warm Bridge yellow; never invent JD; no end-user passwords |
+| `linkedin_selenium/` | Shim re-export of `linkedin_browser` | same public API | Back-compat only |
+| `suggest_roles.py` | Role cards from path → LinkedIn search URLs | `suggest_roles_from_profile`, `linkedin_jobs_search` | Yes/no targeting without inventing jobs |
 | `recruiters.py` | Contact paste/CSV → ranked drafts | `parse_contacts_*`, `score_title`, `enrich_with_messages` | People enter via user paste; title ranking is the value |
 | `intake.py` | Guided form + resume text → profile | `parse_resume_text`, `build_profile_from_intake` | Rules-first; same facts on every angle until user tags; no invented employers |
 | `tracker.py` | Applications, artifacts, outreach, limits, Today | `build_application_from_tailor`, `generate_today_cards`, `limits_payload` | Retention + soft Free/Pro; local-first shapes |
-| `cli.py` | argparse commands | `classify`, `tailor`, `eval`, `recruiters`, `serve`, `fit-brief` | Power-user + scripts |
-| `api.py` | FastAPI on `:8787` | `/api/tailor`, `/api/intake`, … | Thin HTTP over the same functions as CLI |
+| `cli.py` | argparse commands | `classify`, `tailor`, `eval`, `recruiters`, `map-job`, `serve`, `dev`, `fit-brief` | Power-user + scripts |
+| `api.py` | FastAPI on `:8787` | `/api/tailor`, `/api/map-job`, `/api/intake`, … | Thin HTTP over the same functions as CLI |
 | `__main__.py` | `python -m career_fit` | — | Package entry |
 
 ### Critical assemble path (do not fork)
@@ -122,6 +129,13 @@ identity + career_tutoring + targets + resume_text
 | GET | `/api/health` | liveness |
 | GET | `/api/example-profile` | load example YAML |
 | POST | `/api/parse-job` | `parse_job_text` |
+| GET | `/api/session-status` | Chrome / LinkedIn session diagnose |
+| POST | `/api/linkedin-session` | Open Chrome login (blocks ≤5 min) |
+| POST | `/api/map-job` | `map_job_url` + `build_role_insights` |
+| POST | `/api/map-profile` | `map_profile_url` (live / mock / stub) + `suggested_roles` |
+| POST | `/api/suggest-openings` | live LinkedIn job cards (skip incomplete) |
+| POST | `/api/sample-pack` | mock JD for role title → insights → tailor pack |
+| POST | `/api/job-insights` | `build_role_insights` (paste path) |
 | POST | `/api/classify` | `classify_angle` |
 | POST | `/api/tailor` | tailor + render + outreach |
 | POST | `/api/recruiters` | tailor proof + recruiter enrich |
@@ -141,10 +155,10 @@ CORS allows Vite `:5173` only. Adding a new capability: implement in a core modu
 
 | File | Role | Why |
 |------|------|-----|
-| `src/App.tsx` | Shell: nav Home / Intake / Craft | Returning users → Home; fresh → Intake |
+| `src/App.tsx` | Shell: nav Home / Start / Craft / Fresh | Returning users → Home; fresh → Start; Fresh always visible |
 | `src/Home.tsx` | Pipeline + People + Today + Pro panel | Retention surface; calm, brand-forward |
-| `src/Intake.tsx` | Guided 5-step interview | Progressive disclosure → profile |
-| `src/Craft.tsx` | Tailor + save pipeline + log outreach | Wedge craft + memory write path |
+| `src/Intake.tsx` | You → roles → **paste JD** → tailor confirm | No LinkedIn login on happy path |
+| `src/Craft.tsx` | Job + insights + tailor; message-first after save | Aha = company message to send; recruiters collapsed |
 | `src/store.ts` | localStorage profile/apps/artifacts/outreach/usage | Client persist until real backend |
 | `src/api.ts` | Typed `fetch` to `:8787` | Thin; no business rules |
 | `src/styles.css` | Calm teal/ink + Fraunces display | Extend; don’t purple-slop |
@@ -187,7 +201,9 @@ CORS allows Vite `:5173` only. Adding a new capability: implement in a core modu
 |------------------|-----------|----------|
 | New resume angle | `playbook/angles.yaml` + `evals/cases.yaml` + example profile tags | Hardcoded strings in UI |
 | Better anti-AI wording rules | `playbook/rewrite-rules.md` | Unconstrained LLM prompt only |
-| JD paste quality (LinkedIn/Gupy) | `jobs.py` (+ later per-source notes) | Headless login scraper |
+| JD paste quality (LinkedIn/Gupy) | `jobs.py` (+ later per-source notes) | Inventing missing JD sections |
+| Job URL session map | `linkedin_selenium/` + Craft Map role | Red mass harvest / password-in-API |
+| Role insights bullets | `insights.py` | Skipping to tailor with no why |
 | Recruiter ranking / email extract | `recruiters.py` | LinkedIn API scrape |
 | Outreach tone | `outreach.py` / `recruiters.draft_recruiter_message` | Auto-send servers |
 | New API capability | core module → `api.py` → `web/src/api.ts` → `App.tsx` | UI-only duplicate of Python logic |
@@ -204,14 +220,14 @@ CORS allows Vite `:5173` only. Adding a new capability: implement in a core modu
 
 Documented so agents stop re-proposing them:
 
-1. Automated LinkedIn profile/job harvesting in this public repo  
+1. Multi-account / password-in-API LinkedIn mass harvest (red) — session URL map is allowed yellow  
 2. Mass DM / auto-apply from our servers  
 3. Inventing employers, metrics, or tools absent from the profile  
 4. Rewriting the whole CV when `bullets_by_angle` / `summaries_by_angle` exist  
 5. Full CRM UI before guided intake + tailor are delightful  
 6. Suggestion flood before Phase B tracker objects  
 
-Rationale lives in `ARCHITECTURE.md` (LinkedIn) and `PRODUCT.md` / `ECOSYSTEM.md` (phasing).
+Rationale lives in `ARCHITECTURE.md` (session vs red) and `PRODUCT.md` / `ECOSYSTEM.md` (phasing).
 
 ---
 
@@ -232,9 +248,9 @@ If you only polish copy inside an existing function, skip the ledger — still u
 
 ```bash
 career-fit eval              # angle regressions
-career-fit serve             # API :8787
-cd web && npm run dev        # UI :5173
-# happy path: example profile → paste JD → Tailor → paste recruiters
+career-fit map-job --url 'https://www.linkedin.com/jobs/view/1' --mock
+career-fit dev               # API :8787 + UI :5173 together
+# happy path: Use mock JD → Role insights → Generate → Save to pipeline
 ```
 
 Do not claim a layer is “done” in CURRENT without these working for the paths you touched.

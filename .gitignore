@@ -1,7 +1,19 @@
 # Private user data
 data/profile.yaml
+data/linkedin_session.yaml
+data/chrome_profile/
+data/camoufox_profile/
+data/secrets/
+data/out/
 data/out/
 *.pdf
+
+# Local Chrome for Testing (legacy; Camoufox replaces this)
+.browser/
+
+# Camoufox local install (when .venv is locked / XDG_CACHE_HOME override)
+.camoufox-cache/
+.pip-extra/
 
 # Python
 __pycache__/

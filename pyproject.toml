@@ -19,6 +19,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+linkedin = [
+  "camoufox[geoip]>=0.4.0",
+  "google-api-python-client>=2.100",
+  "google-auth-oauthlib>=1.1",
+  "pyotp>=2.9",
+]
 
 [project.scripts]
 career-fit = "career_fit.cli:main"

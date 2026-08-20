@@ -87,6 +87,11 @@ export function storeProfile(profile: Profile | null) {
   else write(K.profile, profile);
 }
 
+/** Wipe local dogfood state so Start (LinkedIn) can run clean. */
+export function clearLocalWorkspace() {
+  Object.values(K).forEach((key) => localStorage.removeItem(key));
+}
+
 export function loadApplications(): Application[] {
   return read(K.apps, []);
 }

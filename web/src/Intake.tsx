@@ -1,20 +1,47 @@
 import { useMemo, useState } from "react";
 import {
+  clearLocalWorkspace,
+  jobInsights,
   loadExampleProfile,
+  mapJob,
+  mapProfile,
+  saveApplicationRemote,
   storeProfile,
   submitIntake,
+  suggestOpenings,
+  suggestRoles,
+  tailor,
   uploadProfileYaml,
   type IntakePayload,
+  type JobOpening,
   type Profile,
+  type RoleInsights,
+  type SuggestedRole,
+  type TailorResult,
 } from "./api";
+import { upsertApplicationBundle } from "./store";
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step = "link" | "roles" | "jobs" | "deepen";
 
-const STEPS = ["You", "How you work", "Targets", "Resume", "Review"] as const;
+export type SeedJob = {
+  title: string;
+  company: string;
+  description: string;
+  url?: string;
+  insights?: RoleInsights | null;
+  pack?: TailorResult | null;
+  saved?: boolean;
+};
+
+export type JourneyCompleteOpts = {
+  jobSearchUrl?: string;
+  seedJob?: SeedJob | null;
+};
 
 type Props = {
-  onComplete: (profile: Profile, label: string) => void;
+  onComplete: (profile: Profile, label: string, opts?: JourneyCompleteOpts) => void;
   onCancel?: () => void;
+  onCleared?: () => void;
   initial?: Profile | null;
 };
 
@@ -59,79 +86,341 @@ function fromProfile(p: Profile | null | undefined): IntakePayload {
   };
 }
 
-export default function Intake({ onComplete, onCancel, initial }: Props) {
-  const [step, setStep] = useState<Step>(0);
-  const [form, setForm] = useState<IntakePayload>(() => fromProfile(initial));
+export default function Intake({
+  onComplete,
+  onCancel,
+  onCleared,
+  initial,
+}: Props) {
+  const [step, setStep] = useState<Step>("link");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [form, setForm] = useState<IntakePayload>(() => fromProfile(null));
+  const [mappedProfile, setMappedProfile] = useState<Profile | null>(null);
+  const [headline, setHeadline] = useState("");
+  const [mapMeta, setMapMeta] = useState("");
+  const [roleCards, setRoleCards] = useState<SuggestedRole[]>([]);
+  const [votes, setVotes] = useState<Record<string, "yes" | "no">>({});
+  const [customRole, setCustomRole] = useState("");
+  const [openings, setOpenings] = useState<JobOpening[]>([]);
+  const [openingsNote, setOpeningsNote] = useState("");
+  const [jobUrl, setJobUrl] = useState("");
+  const [selected, setSelected] = useState<JobOpening | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [warnings, setWarnings] = useState<string[]>([]);
-  const [previewNote, setPreviewNote] = useState("");
 
-  const canNext = useMemo(() => {
-    if (step === 0) {
-      return Boolean(form.identity.name.trim() && form.identity.email.trim());
-    }
-    return true;
-  }, [step, form.identity.name, form.identity.email]);
+  const canFinish = useMemo(
+    () => Boolean(form.identity.name.trim()),
+    [form.identity.name],
+  );
 
-  function patchIdentity(partial: Partial<IntakePayload["identity"]>) {
-    setForm((f) => ({ ...f, identity: { ...f.identity, ...partial } }));
-  }
+  const yesRoles = useMemo(
+    () => roleCards.filter((r) => votes[r.id] === "yes"),
+    [roleCards, votes],
+  );
+
   function patchTutoring(partial: Partial<IntakePayload["career_tutoring"]>) {
     setForm((f) => ({
       ...f,
       career_tutoring: { ...f.career_tutoring, ...partial },
     }));
   }
-  function patchTargets(partial: Partial<IntakePayload["targets"]>) {
-    setForm((f) => ({ ...f, targets: { ...f.targets, ...partial } }));
+
+  function patchIdentity(partial: Partial<IntakePayload["identity"]>) {
+    setForm((f) => ({ ...f, identity: { ...f.identity, ...partial } }));
   }
 
-  async function onResumeFile(file: File | null) {
-    if (!file) return;
+  function startFresh() {
+    clearLocalWorkspace();
+    setStep("link");
+    setLinkedinUrl("");
+    setForm(fromProfile(null));
+    setMappedProfile(null);
+    setHeadline("");
+    setMapMeta("");
+    setRoleCards([]);
+    setVotes({});
+    setCustomRole("");
+    setOpenings([]);
+    setOpeningsNote("");
+    setJobUrl("");
+    setSelected(null);
     setError("");
-    const name = file.name.toLowerCase();
+    onCleared?.();
+  }
+
+  function applyMapped(
+    data: Awaited<ReturnType<typeof mapProfile>>,
+    metaLine: string,
+  ) {
+    setMappedProfile(data.profile);
+    setForm(fromProfile(data.profile));
+    setHeadline(String(data.snapshot.headline || data.snapshot.name || ""));
+    setMapMeta(metaLine);
+    setRoleCards(data.suggested_roles || []);
+    setVotes({});
+    setError("");
+    setStep("roles");
+  }
+
+  async function persistProfile() {
+    const wanted =
+      yesRoles.length > 0
+        ? yesRoles.map((r) => r.title).join("\n")
+        : form.targets.roles_wanted || "";
+    const payload: IntakePayload = {
+      ...form,
+      targets: { ...form.targets, roles_wanted: wanted },
+      base_profile: mappedProfile,
+    };
+    const result = await submitIntake(payload);
+    storeProfile(result.profile);
+    return result.profile;
+  }
+
+  /** One field only: LinkedIn URL → stub identity (no login, no form dump). */
+  async function onContinueWithUrl() {
+    setError("");
+    if (!linkedinUrl.trim()) {
+      setError("Paste your LinkedIn profile URL — that’s the only thing we need here.");
+      return;
+    }
+    setBusy(true);
     try {
-      if (name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".json")) {
-        const profile = await uploadProfileYaml(file);
-        storeProfile(profile);
-        onComplete(profile, `Loaded YAML: ${file.name}`);
-        return;
+      const data = await mapProfile({
+        url: linkedinUrl.trim(),
+        stub: true,
+      });
+      let roles = data.suggested_roles || [];
+      if (roles.length === 0) {
+        const more = await suggestRoles({
+          profile: data.profile,
+          headline: String(data.snapshot.headline || data.snapshot.name || ""),
+          limit: 5,
+        });
+        roles = more.roles;
       }
-      if (name.endsWith(".pdf")) {
-        setError(
-          "PDF parse is not enabled yet — paste text, or upload .md / .txt / .tex / .yaml.",
-        );
-        return;
-      }
-      const text = await file.text();
-      setForm((f) => ({ ...f, resume_text: text }));
-      setPreviewNote(`Loaded resume file: ${file.name}`);
+      applyMapped(
+        { ...data, suggested_roles: roles },
+        "From your LinkedIn URL only — no login. We don’t invent employers. Next: pick roles, then pick a job.",
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
     }
   }
 
-  async function finish() {
+  function addCustomRole() {
+    const title = customRole.trim();
+    if (!title) return;
+    const id = `custom-${Date.now()}`;
+    setRoleCards((cards) => [
+      ...cards,
+      {
+        id,
+        title,
+        kind: "custom",
+        why: "You added this target title.",
+        linkedin_url: "",
+      },
+    ]);
+    setVotes((v) => ({ ...v, [id]: "yes" }));
+    setCustomRole("");
+  }
+
+  async function goToJobs() {
     setError("");
     setBusy(true);
     try {
-      const result = await submitIntake({
-        ...form,
-        base_profile: form.base_profile,
+      const profile = await persistProfile();
+      setMappedProfile(profile);
+      setForm(fromProfile(profile));
+      const titles =
+        yesRoles.length > 0
+          ? yesRoles.map((r) => r.title)
+          : roleCards.slice(0, 2).map((r) => r.title);
+      const searchTitles =
+        titles.length > 0 ? titles : ["Software Engineer"];
+      setSelected(null);
+      setJobUrl("");
+      setStep("jobs");
+
+      // Discovery cards from role search links (open in their browser — not invented JDs)
+      const browse: JobOpening[] = (
+        yesRoles.length > 0 ? yesRoles : roleCards.slice(0, 3)
+      ).map((r) => ({
+        id: `browse-${r.id}`,
+        title: r.title,
+        company: "LinkedIn search",
+        blurb: "Browse live openings in your browser, then paste a jobs/view URL below.",
+        description: "",
+        linkedin_url:
+          r.linkedin_url ||
+          `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(r.title)}`,
+        sample: false,
+      }));
+
+      try {
+        const data = await suggestOpenings({
+          role_titles: searchTitles,
+          location: String(
+            (profile.identity as { city?: string } | undefined)?.city || "",
+          ),
+          limit: 6,
+        });
+        setOpenings(data.openings);
+        setOpeningsNote(
+          data.note ||
+            "Pick a job below — we already pulled the posting. Or paste any job URL.",
+        );
+      } catch {
+        setOpenings(browse);
+        setOpeningsNote(
+          "Open a search below in your browser, copy one job link, paste it here — one URL, we scrape the rest.",
+        );
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function useJobUrl() {
+    setError("");
+    if (!jobUrl.trim()) {
+      setError("Paste a job URL — one link, we scrape title, company, and JD.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const data = await mapJob({
+        url: jobUrl.trim(),
+        profile: mappedProfile,
+        mock: null,
       });
-      storeProfile(result.profile);
-      setWarnings(result.warnings || []);
-      const name =
-        (result.profile.identity as { name?: string } | undefined)?.name ||
-        form.identity.name;
-      onComplete(
-        result.profile,
-        `Intake saved: ${name}` +
-          (result.parsed_roles
-            ? ` · ${result.parsed_roles} role(s)`
-            : " · no roles parsed yet"),
+      if (!data.job.company?.trim()) {
+        setError(
+          "That URL didn’t yield a company — try a public careers / jobs/view link.",
+        );
+        return;
+      }
+      const opening: JobOpening = {
+        id: "mapped-url",
+        title: data.job.title || "Role",
+        company: data.job.company,
+        blurb: data.job.description.slice(0, 180),
+        description: data.job.description,
+        linkedin_url: jobUrl.trim(),
+        sample: Boolean(data.meta.mock),
+      };
+      setSelected(opening);
+      setOpenings((o) => [opening, ...o.filter((x) => x.id !== "mapped-url")]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function chooseOpening(o: JobOpening) {
+    // Stay inside Career Fit UI — never open LinkedIn in another tab
+    if (!o.description?.trim()) {
+      setError(
+        "That card has no JD yet — paste its jobs/view URL below (one shot).",
       );
+      if (o.linkedin_url) {
+        setJobUrl(o.linkedin_url);
+      }
+      return;
+    }
+    setSelected(o);
+    setError("");
+  }
+
+  async function finishWithJob(mode: "tailor" | "save" | "craft") {
+    if (!selected || !selected.description?.trim()) {
+      setError("Pick a scraped job or paste a job URL first.");
+      return;
+    }
+    if (!selected.company.trim()) {
+      setError("That posting has no company — try another URL.");
+      return;
+    }
+    setError("");
+    setBusy(true);
+    try {
+      const profile = await persistProfile();
+      const name =
+        (profile.identity as { name?: string } | undefined)?.name ||
+        form.identity.name;
+
+      const insightsData = await jobInsights({
+        raw: selected.description,
+        title: selected.title,
+        company: selected.company,
+        profile,
+        source: "paste",
+      });
+
+      let pack: TailorResult | null = null;
+      let saved = false;
+
+      if (mode === "tailor") {
+        pack = await tailor({
+          profile,
+          job: {
+            title: selected.title,
+            company: selected.company,
+            description: selected.description,
+            locale: "en",
+            raw_paste: selected.description,
+          },
+          angle: insightsData.insights.angle,
+        });
+        const bundle = await saveApplicationRemote({
+          title: selected.title,
+          company: selected.company,
+          angle: pack.angle,
+          locale: pack.locale,
+          job_description: selected.description,
+          markdown: pack.markdown,
+          latex: pack.latex,
+          company_message: pack.company_message,
+          summary: pack.summary,
+          proof: pack.proof,
+        });
+        upsertApplicationBundle(bundle.application, bundle.artifact);
+        saved = true;
+      } else if (mode === "save") {
+        const bundle = await saveApplicationRemote({
+          title: selected.title,
+          company: selected.company,
+          angle: insightsData.insights.angle,
+          locale: "en",
+          job_description: selected.description,
+          markdown: "",
+          latex: "",
+          company_message: "",
+          summary: "",
+          proof: "",
+        });
+        upsertApplicationBundle(bundle.application, bundle.artifact);
+        saved = true;
+      }
+
+      onComplete(profile, `Ready · ${name}`, {
+        jobSearchUrl: selected.linkedin_url,
+        seedJob: {
+          title: selected.title,
+          company: selected.company,
+          description: selected.description,
+          url: selected.linkedin_url,
+          insights: insightsData.insights,
+          pack,
+          saved,
+        },
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -153,113 +442,319 @@ export default function Intake({ onComplete, onCancel, initial }: Props) {
     }
   }
 
+  async function onResumeFile(file: File | null) {
+    if (!file) return;
+    setError("");
+    const name = file.name.toLowerCase();
+    try {
+      if (
+        name.endsWith(".yaml") ||
+        name.endsWith(".yml") ||
+        name.endsWith(".json")
+      ) {
+        const profile = await uploadProfileYaml(file);
+        storeProfile(profile);
+        setMappedProfile(profile);
+        setForm(fromProfile(profile));
+        setMapMeta(`Loaded ${file.name}`);
+        const data = await suggestRoles({ profile, limit: 5 });
+        setRoleCards(data.roles);
+        setVotes({});
+        setStep("roles");
+        return;
+      }
+      const text = await file.text();
+      setForm((f) => ({ ...f, resume_text: text }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  const stepTitle =
+    step === "link"
+      ? "Your LinkedIn URL"
+      : step === "roles"
+        ? "What kinds of roles?"
+        : step === "jobs"
+          ? "Jobs for you"
+          : "Optional depth";
+
+  const stepHint =
+    step === "link"
+      ? "One link. No login. No long form — we never invent employers."
+      : step === "roles"
+        ? "Tap yes/no, or type a title. Then we show openings."
+        : step === "jobs"
+          ? "Pick a card, or paste one job URL — we scrape the rest."
+          : "Skip anytime — only if you want more depth later.";
+
   return (
     <section className="panel intake">
       <div className="intake-head">
         <div>
-          <h2>Guided intake</h2>
-          <p className="hint">
-            Dump who you are and your current resume. We structure it once —
-            then tailor jobs without inventing facts.
-          </p>
+          <h2>{stepTitle}</h2>
+          <p className="hint">{stepHint}</p>
         </div>
-        <div className="intake-steps" aria-label="Intake steps">
-          {STEPS.map((label, i) => (
+        <div className="intake-steps" aria-label="Start steps">
+          {(
+            [
+              ["link", "1. Link"],
+              ["roles", "2. Roles"],
+              ["jobs", "3. Job"],
+              ["deepen", "4. Optional"],
+            ] as const
+          ).map(([id, label]) => (
             <button
-              key={label}
+              key={id}
               type="button"
-              className={`intake-step ${step === i ? "on" : ""} ${step > i ? "done" : ""}`}
-              onClick={() => setStep(i as Step)}
+              className={`intake-step ${step === id ? "on" : ""} ${
+                (step === "roles" && id === "link") ||
+                (step === "jobs" && (id === "link" || id === "roles")) ||
+                (step === "deepen" && id !== "deepen")
+                  ? "done"
+                  : ""
+              }`}
+              onClick={() => {
+                if (id === "link") setStep("link");
+                if (id === "roles" && mappedProfile) setStep("roles");
+                if (id === "jobs" && mappedProfile) setStep("jobs");
+                if (id === "deepen" && mappedProfile) setStep("deepen");
+              }}
             >
-              {i + 1}. {label}
+              {label}
             </button>
           ))}
         </div>
       </div>
 
-      {step === 0 && (
-        <div className="intake-body">
+      {step === "link" && (
+        <div className="intake-body journey-hero">
+          {(initial || mappedProfile) && (
+            <div className="notice">
+              There’s a saved profile in this browser.{" "}
+              <button type="button" className="btn" onClick={startFresh}>
+                Erase & start fresh
+              </button>
+            </div>
+          )}
           <div className="field">
-            <label htmlFor="name">Name *</label>
+            <label htmlFor="li">LinkedIn profile URL</label>
+            <input
+              id="li"
+              type="url"
+              value={linkedinUrl}
+              onChange={(e) => setLinkedinUrl(e.target.value)}
+              placeholder="https://www.linkedin.com/in/you"
+              autoFocus
+            />
+            <p className="hint">
+              We only use the URL (name from the slug). No password, no browser
+              login.
+            </p>
+          </div>
+          <div className="row">
+            <button
+              type="button"
+              className="btn"
+              disabled={busy || !linkedinUrl.trim()}
+              onClick={onContinueWithUrl}
+            >
+              {busy ? "Continuing…" : "Continue"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === "roles" && (
+        <div className="intake-body">
+          {mapMeta && <p className="status ok">{mapMeta}</p>}
+          {headline ? (
+            <p className="journey-headline">
+              <span className="hint">Starting from · </span>
+              {headline}
+            </p>
+          ) : null}
+          <div className="field">
+            <label htmlFor="custom-role">Add a target title</label>
+            <div className="row">
+              <input
+                id="custom-role"
+                type="text"
+                value={customRole}
+                onChange={(e) => setCustomRole(e.target.value)}
+                placeholder="e.g. Data Engineer…"
+              />
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={!customRole.trim()}
+                onClick={addCustomRole}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+          <div className="role-cards">
+            {roleCards.map((r) => {
+              const vote = votes[r.id];
+              return (
+                <article
+                  key={r.id}
+                  className={`role-card ${vote === "yes" ? "yes" : ""} ${vote === "no" ? "no" : ""}`}
+                >
+                  <header>
+                    <h3>{r.title}</h3>
+                    <span className="hint">{r.kind.replace(/_/g, " ")}</span>
+                  </header>
+                  <p className="meta">{r.why}</p>
+                  <div className="row" style={{ marginTop: "0.65rem" }}>
+                    <button
+                      type="button"
+                      className={`btn ${vote === "yes" ? "" : "secondary"}`}
+                      onClick={() =>
+                        setVotes((v) => ({ ...v, [r.id]: "yes" }))
+                      }
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${vote === "no" ? "" : "ghost"}`}
+                      onClick={() => setVotes((v) => ({ ...v, [r.id]: "no" }))}
+                    >
+                      No
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {step === "jobs" && (
+        <div className="intake-body">
+          {openingsNote && <p className="hint">{openingsNote}</p>}
+          <div className="role-cards">
+            {openings.map((o) => {
+              const hasJd = Boolean(o.description?.trim());
+              return (
+                <article
+                  key={o.id}
+                  className={`role-card ${selected?.id === o.id ? "yes" : ""}`}
+                >
+                  <header>
+                    <h3>{o.title}</h3>
+                    <span className="hint">
+                      {hasJd ? o.company : "Browse openings"}
+                    </span>
+                  </header>
+                  <p className="meta">
+                    {hasJd ? (
+                      <>
+                        <strong>{o.company}</strong> — {o.blurb}
+                      </>
+                    ) : (
+                      o.blurb
+                    )}
+                  </p>
+                  <div className="row" style={{ marginTop: "0.65rem" }}>
+                    <button
+                      type="button"
+                      className={`btn ${selected?.id === o.id ? "" : "secondary"}`}
+                      disabled={busy}
+                      onClick={() => chooseOpening(o)}
+                    >
+                      {hasJd
+                        ? selected?.id === o.id
+                          ? "Selected"
+                          : "Choose this"
+                        : "Open search →"}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div className="field" style={{ marginTop: "1.25rem" }}>
+            <label htmlFor="job-url">Or paste a job URL</label>
+            <div className="row">
+              <input
+                id="job-url"
+                type="url"
+                value={jobUrl}
+                onChange={(e) => setJobUrl(e.target.value)}
+                placeholder="https://www.linkedin.com/jobs/view/… or search?currentJobId=…"
+              />
+              <button
+                type="button"
+                className="btn"
+                disabled={busy || !jobUrl.trim()}
+                onClick={useJobUrl}
+              >
+                {busy ? "Scraping…" : "Use URL"}
+              </button>
+            </div>
+            <p className="hint">
+              One link only (jobs/view or search with a selected job) — we scrape
+              title, company, and description.
+            </p>
+          </div>
+          {selected && selected.description?.trim() && (
+            <div className="notice" style={{ marginTop: "1rem" }}>
+              <p style={{ marginBottom: "0.65rem" }}>
+                Tailor for <strong>{selected.title}</strong> at{" "}
+                <strong>{selected.company}</strong>?
+              </p>
+              <div className="row">
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={busy}
+                  onClick={() => finishWithJob("tailor")}
+                >
+                  {busy ? "Crafting…" : "Yes — tailor & save"}
+                </button>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  disabled={busy}
+                  onClick={() => finishWithJob("save")}
+                >
+                  Save only
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  disabled={busy}
+                  onClick={() => finishWithJob("craft")}
+                >
+                  Open in Craft
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {step === "deepen" && (
+        <div className="intake-body">
+          <p className="hint">
+            Optional only — skip unless you want a richer graph later.
+          </p>
+          <div className="field">
+            <label htmlFor="name">Name</label>
             <input
               id="name"
               type="text"
               value={form.identity.name}
               onChange={(e) => patchIdentity({ name: e.target.value })}
-              placeholder="Alex Rivera"
-              autoComplete="name"
             />
           </div>
-          <div className="field">
-            <label htmlFor="email">Email *</label>
-            <input
-              id="email"
-              type="text"
-              value={form.identity.email}
-              onChange={(e) => patchIdentity({ email: e.target.value })}
-              placeholder="you@example.com"
-              autoComplete="email"
-            />
-          </div>
-          <div className="grid two-tight">
-            <div className="field">
-              <label htmlFor="city">City</label>
-              <input
-                id="city"
-                type="text"
-                value={form.identity.city || ""}
-                onChange={(e) => patchIdentity({ city: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="phone">Phone</label>
-              <input
-                id="phone"
-                type="text"
-                value={form.identity.phone || ""}
-                onChange={(e) => patchIdentity({ phone: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="field">
-            <label htmlFor="linkedin">LinkedIn (public URL or handle)</label>
-            <input
-              id="linkedin"
-              type="text"
-              value={form.identity.linkedin || ""}
-              onChange={(e) => patchIdentity({ linkedin: e.target.value })}
-              placeholder="linkedin.com/in/you"
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="languages">Languages</label>
-            <p className="hint">Comma-separated</p>
-            <input
-              id="languages"
-              type="text"
-              value={form.identity.languages || ""}
-              onChange={(e) => patchIdentity({ languages: e.target.value })}
-              placeholder="English (fluent), Portuguese (fluent)"
-            />
-          </div>
-        </div>
-      )}
-
-      {step === 1 && (
-        <div className="intake-body">
-          <p className="hint" style={{ marginBottom: "0.75rem" }}>
-            One idea per line. This feeds fit briefs and starter summaries — not
-            invented CV bullets.
-          </p>
           {(
             [
               ["enjoyed_most", "What you enjoy most"],
-              ["positive_differentials", "Positive differentials"],
-              ["technical_knowledge", "Technical knowledge"],
-              ["challenges_overcome", "Challenges overcome"],
               ["hates_doing", "What you hate doing"],
-              ["improvement_areas", "Improvement areas"],
-              ["networking_notes", "Networking notes"],
             ] as const
           ).map(([key, label]) => (
             <div className="field" key={key}>
@@ -268,171 +763,83 @@ export default function Intake({ onComplete, onCancel, initial }: Props) {
                 id={key}
                 value={form.career_tutoring[key] || ""}
                 onChange={(e) => patchTutoring({ [key]: e.target.value })}
-                placeholder="One line per item…"
+                rows={2}
               />
             </div>
           ))}
-        </div>
-      )}
-
-      {step === 2 && (
-        <div className="intake-body">
           <div className="field">
-            <label htmlFor="roles">Roles you want</label>
-            <p className="hint">One per line</p>
-            <textarea
-              id="roles"
-              value={form.targets.roles_wanted || ""}
-              onChange={(e) => patchTargets({ roles_wanted: e.target.value })}
-              placeholder={"GTM Engineer\nBackend / API Engineer"}
-            />
-          </div>
-          <div className="field">
-            <label>Locales</label>
-            <div className="row">
-              {(["en", "pt"] as const).map((loc) => {
-                const on = (form.targets.locales || []).includes(loc);
-                return (
-                  <label key={loc} className="check">
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={() => {
-                        const cur = new Set(form.targets.locales || []);
-                        if (on) cur.delete(loc);
-                        else cur.add(loc);
-                        const next = [...cur];
-                        patchTargets({ locales: next.length ? next : ["en"] });
-                      }}
-                    />
-                    {loc === "en" ? "English" : "Português"}
-                  </label>
-                );
-              })}
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={Boolean(form.targets.remote)}
-                  onChange={(e) => patchTargets({ remote: e.target.checked })}
-                />
-                Open to remote
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="intake-body">
-          <div className="field">
-            <label htmlFor="resume">Resume paste</label>
-            <p className="hint">
-              Prefer sections titled Experience / Projects / Skills / Education
-              with <code>- bullet</code> lines. We parse rules-first — we do not
-              invent employers. PDF not supported yet.
-            </p>
-            <textarea
-              id="resume"
-              className="tall"
-              value={form.resume_text || ""}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, resume_text: e.target.value }))
-              }
-              placeholder={`Experience\nSoftware Engineer at Acme — 2022 - Present\n- Shipped API integrations used by partners.\n\nProjects\nPipeline dashboard\n- Built daily health checks for failed jobs.\n\nSkills\nPython, FastAPI, SQL, React`}
-            />
-          </div>
-          <div className="field">
-            <label>Or upload text / YAML</label>
+            <label>Résumé / YAML (optional)</label>
             <input
               type="file"
-              accept=".md,.txt,.tex,.yaml,.yml,.json,.pdf"
+              accept=".md,.txt,.tex,.yaml,.yml,.json"
               onChange={(e) => onResumeFile(e.target.files?.[0] ?? null)}
             />
-            {previewNote && <p className="status ok">{previewNote}</p>}
           </div>
-        </div>
-      )}
-
-      {step === 4 && (
-        <div className="intake-body">
-          <ul className="review-list">
-            <li>
-              <strong>{form.identity.name || "—"}</strong> ·{" "}
-              {form.identity.email || "no email"}
-            </li>
-            <li>
-              Targets:{" "}
-              {(form.targets.roles_wanted || "")
-                .split("\n")
-                .filter(Boolean)
-                .slice(0, 3)
-                .join(" · ") || "not set"}
-            </li>
-            <li>
-              Resume paste:{" "}
-              {form.resume_text?.trim()
-                ? `${form.resume_text.trim().split(/\s+/).length} words`
-                : "none (you can still tailor with tutoring + later YAML)"}
-            </li>
-          </ul>
-          {warnings.length > 0 && (
-            <div className="notice">
-              {warnings.map((w) => (
-                <div key={w}>{w}</div>
-              ))}
-            </div>
-          )}
-          <p className="hint">
-            Saving builds a profile with the same facts on every angle until you
-            tag per-angle bullets. Advanced users can still upload a full YAML
-            anytime.
-          </p>
         </div>
       )}
 
       {error && <p className="status error">{error}</p>}
 
       <div className="row intake-actions">
-        {onCancel && (
+        {onCancel && step !== "link" && (
           <button type="button" className="btn secondary" onClick={onCancel}>
             Back to workspace
           </button>
         )}
         <button
           type="button"
-          className="btn secondary"
+          className="btn ghost"
           disabled={busy}
           onClick={useExample}
         >
-          Use example profile
+          Use example
         </button>
-        {step > 0 && (
+        {step === "roles" && (
+          <>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => setStep("deepen")}
+            >
+              Optional depth
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={busy || !canFinish}
+              onClick={goToJobs}
+            >
+              {busy ? "Saving…" : "Find jobs →"}
+            </button>
+          </>
+        )}
+        {step === "jobs" && (
           <button
             type="button"
             className="btn secondary"
-            onClick={() => setStep((s) => (s - 1) as Step)}
+            onClick={() => setStep("roles")}
           >
-            Back
+            Back to roles
           </button>
         )}
-        {step < 4 ? (
-          <button
-            type="button"
-            className="btn"
-            disabled={!canNext}
-            onClick={() => setStep((s) => (s + 1) as Step)}
-          >
-            Continue
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="btn"
-            disabled={busy || !canNext}
-            onClick={finish}
-          >
-            {busy ? "Saving…" : "Save intake & start tailoring"}
-          </button>
+        {step === "deepen" && (
+          <>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => setStep("roles")}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={busy || !canFinish}
+              onClick={goToJobs}
+            >
+              {busy ? "Saving…" : "Find jobs →"}
+            </button>
+          </>
         )}
       </div>
     </section>

@@ -1,17 +1,90 @@
 # Job & contact sources — policy tiers
-# green = official/open or user-owned export
-# yellow = public page / paste-assisted; careful rate limits; no login bypass
-# red = aggressive anti-bot or ToS-hostile automation — do not ship in public core
+#
+# Owner lock (2026-08-20): Camoufox guest-first (Warm Bridge yellow for warm
+# profile). Public HTTP remains primary for one-shot job URLs. Paste/CSV are
+# green fallbacks. Mass/headless harvest and end-user password-in-API stay red.
+# Product burner + Gmail OTP is ops/infra only (not a user feature).
+#
+# green  = preferred user-owned / official / no fetch
+# yellow = seller/candidate’s own session OR product infra burner; rate-limit
+# red    = multi-account farm, password-in-API, inventing JD facts
 
 sources:
+  linkedin_browser_profile:
+    tier: yellow
+    notes: >-
+      OPTIONAL. Candidate LinkedIn /in/ URL → Camoufox session map. Not required
+      for the wedge — résumé/YAML paste is the default Start path.
+    enabled: true
+    primary: false
+    module: career_fit.linkedin_browser.profile_map
+
+  linkedin_browser_job:
+    tier: yellow
+    notes: >-
+      OPTIONAL. Camoufox (guest then persistent profile) → job URL → JD text.
+      Default path is job_url_public_fetch (no login).
+    enabled: true
+    primary: false
+    module: career_fit.linkedin_browser
+
+  linkedin_burner_otp:
+    tier: yellow
+    notes: >-
+      OPS/INFRA ONLY. Product-owned burner LinkedIn + Gmail API email OTP via
+      career-fit linkedin-burner-login. Never end-user passwords or user Gmail.
+      Distinct from red linkedin_automated_scrape.
+    enabled: true
+    primary: false
+    module: career_fit.linkedin_browser.burner_login
+
+  # Legacy aliases (shim → linkedin_browser)
+  linkedin_selenium_profile:
+    tier: yellow
+    notes: "Deprecated alias — use linkedin_browser_profile."
+    enabled: true
+    primary: false
+    module: career_fit.linkedin_selenium
+
+  linkedin_selenium_job:
+    tier: yellow
+    notes: "Deprecated alias — use linkedin_browser_job."
+    enabled: true
+    primary: false
+    module: career_fit.linkedin_selenium
+
+  linkedin_url_identity:
+    tier: green
+    notes: "Normalize linkedin.com/jobs/view/{id} and /in/{slug} (no fetch)."
+    enabled: true
+    module: career_fit.jobs
+
   user_paste_jd:
     tier: green
-    notes: "Primary path. LinkedIn/Gupy/inHire/anywhere text pasted by user."
+    notes: >-
+      FALLBACK only. Prefer one-shot job URL scrape. Multi-field JD paste
+      is not on the Start happy path.
     enabled: true
+    primary: false
+
+  job_url_public_fetch:
+    tier: green
+    notes: >-
+      PRIMARY for job intake. One careers / jobs/view URL → HTTP scrape
+      (JSON-LD + text). No LinkedIn login. Camoufox is fallback.
+    enabled: true
+    primary: true
+    module: career_fit.linkedin_browser.public_fetch
+
+  user_paste_resume:
+    tier: green
+    notes: "Optional deepen only — not Start."
+    enabled: true
+    primary: false
 
   user_paste_contacts:
     tier: green
-    notes: "Recruiter/HM cards + About pasted by user. Emails extracted from provided text only."
+    notes: "Recruiter/HM cards + About pasted by user. Emails from provided text only."
     enabled: true
 
   user_csv_contacts:
@@ -21,30 +94,37 @@ sources:
 
   linkedin_data_export:
     tier: green
-    notes: "Official LinkedIn member data export uploaded by user. Parse locally. Never scrape."
+    notes: "Official LinkedIn member data export ZIP/CSV uploaded by user. Parse locally."
     enabled: false
 
   gupy_public_job:
     tier: yellow
-    notes: "Public job posting pages may be fetchable later. Prefer paste until adapter exists."
+    notes: "Public job pages may be fetchable later. Prefer session/paste until adapter exists."
     enabled: false
 
   inhire_public_job:
     tier: yellow
-    notes: "Same as Gupy — paste first."
+    notes: "Same as Gupy — paste or later public fetch."
     enabled: false
 
   linkedin_jobs_api:
     tier: green
-    notes: "Only via official partner/API programs if/when available."
-    enabled: false
-
-  linkedin_automated_scrape:
-    tier: red
-    notes: "ToS + ban risk + fragility. Explicitly forbidden in public Career Fit core."
+    notes: "Only via official partner/API programs if/when available — prefer over browser then."
     enabled: false
 
   browser_assisted_capture:
     tier: yellow
-    notes: "User-logged browser extension they trigger. Private/experimental fork first."
+    notes: "Extension: user logged in, user clicks Send to Career Fit. Private fork ok; overlaps Camoufox session."
+    enabled: false
+
+  linkedin_automated_scrape:
+    tier: red
+    notes: >-
+      Headless multi-account / password-in-API / mass job harvest. Forbidden.
+      Distinct from yellow Camoufox session map and ops burner OTP bootstrap.
+    enabled: false
+
+  invent_job_facts:
+    tier: red
+    notes: "Never invent employers, metrics, or tools absent from profile / scraped JD text."
     enabled: false

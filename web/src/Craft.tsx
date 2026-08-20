@@ -1,22 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  fetchLimits,
+  jobInsights,
   loadExampleProfile,
   logOutreachRemote,
+  mapJob,
   parseJob,
   recruiters,
   saveApplicationRemote,
   tailor,
   type Contact,
   type Profile,
+  type RoleInsights,
   type TailorResult,
-  type TrackerLimits,
 } from "./api";
+import type { SeedJob } from "./Intake";
 import {
-  bumpTailorCount,
   loadApplications,
-  loadUsage,
-  markProRequested,
   storeProfile,
   upsertApplicationBundle,
   upsertOutreach,
@@ -29,6 +28,7 @@ type Props = {
   profile: Profile | null;
   profileLabel: string;
   seedApp?: Application | null;
+  seedJob?: SeedJob | null;
   onProfile: (p: Profile, label: string) => void;
   onIntake: () => void;
   onSaved: () => void;
@@ -49,40 +49,46 @@ export default function Craft({
   profile,
   profileLabel,
   seedApp,
+  seedJob,
   onProfile,
   onIntake,
   onSaved,
   onHome,
 }: Props) {
-  const [jobPaste, setJobPaste] = useState(seedApp?.job_description || "");
-  const [title, setTitle] = useState(seedApp?.title || "");
-  const [company, setCompany] = useState(seedApp?.company || "");
+  const [jobUrl, setJobUrl] = useState(seedJob?.url || "");
+  const [jobPaste, setJobPaste] = useState(
+    seedJob?.description || seedApp?.job_description || "",
+  );
+  const [showPaste, setShowPaste] = useState(
+    Boolean(seedJob?.description || seedApp?.job_description),
+  );
+  const [showRecruiters, setShowRecruiters] = useState(false);
+  const [title, setTitle] = useState(seedJob?.title || seedApp?.title || "");
+  const [company, setCompany] = useState(
+    seedJob?.company || seedApp?.company || "",
+  );
   const [locale, setLocale] = useState(seedApp?.locale || "en");
+  const [insights, setInsights] = useState<RoleInsights | null>(
+    seedJob?.insights || null,
+  );
+  const [mapMeta, setMapMeta] = useState("");
   const [contactsPaste, setContactsPaste] = useState("");
-  const [result, setResult] = useState<TailorResult | null>(null);
+  const [result, setResult] = useState<TailorResult | null>(
+    seedJob?.pack || null,
+  );
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactsNote, setContactsNote] = useState("");
   const [tab, setTab] = useState<Tab>("markdown");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
-  const [limits, setLimits] = useState<TrackerLimits | null>(null);
+  const [status, setStatus] = useState(
+    seedJob?.pack
+      ? `Tailored · ${seedJob.title} at ${seedJob.company}`
+      : seedJob
+        ? `Job ready · ${seedJob.title} — generate when you want`
+        : "",
+  );
   const [savePulse, setSavePulse] = useState(false);
-  const [usage, setUsage] = useState(loadUsage());
-
-  useEffect(() => {
-    fetchLimits()
-      .then(setLimits)
-      .catch(() =>
-        setLimits({
-          free_tailor_per_month: 3,
-          free_application_cap: 5,
-          pro_price_usd: 29,
-          pro_blurb: "Pro unlocks unlimited craft + full pipeline.",
-          stages: [],
-        }),
-      );
-  }, []);
 
   useEffect(() => {
     if (!seedApp) return;
@@ -90,8 +96,30 @@ export default function Craft({
     setTitle(seedApp.title || "");
     setCompany(seedApp.company || "");
     setLocale(seedApp.locale || "en");
+    setShowPaste(!!seedApp.job_description);
     setStatus(`Opened ${seedApp.company || seedApp.title} from pipeline`);
   }, [seedApp]);
+
+  useEffect(() => {
+    if (!seedJob) return;
+    setTitle(seedJob.title);
+    setCompany(seedJob.company);
+    setJobPaste(seedJob.description);
+    setJobUrl(seedJob.url || "");
+    setShowPaste(true);
+    if (seedJob.insights) setInsights(seedJob.insights);
+    if (seedJob.pack) {
+      setResult(seedJob.pack);
+      setTab("message");
+      setStatus(
+        seedJob.saved
+          ? `Saved · company message ready for ${seedJob.company}`
+          : `Tailored · ${seedJob.title}`,
+      );
+    } else {
+      setStatus(`Job ready · ${seedJob.title} — generate when you want`);
+    }
+  }, [seedJob]);
 
   const output = useMemo(() => {
     if (!result) return "";
@@ -100,21 +128,82 @@ export default function Craft({
     return result.company_message;
   }, [result, tab]);
 
-  const tailorBlocked =
-    !!limits && usage.tailor_count >= limits.free_tailor_per_month;
+  function applyMappedJob(
+    job: {
+      title: string;
+      company: string;
+      description: string;
+      locale_hint: string | null;
+    },
+    nextInsights: RoleInsights,
+    metaNote: string,
+  ) {
+    setTitle(job.title);
+    setCompany(job.company);
+    setJobPaste(job.description);
+    if (job.locale_hint) setLocale(job.locale_hint);
+    setInsights(nextInsights);
+    setMapMeta(metaNote);
+    setResult(null);
+    setStatus(`Mapped · angle ${nextInsights.angle}`);
+  }
 
-  const appCapBlocked =
-    !!limits && loadApplications().length >= limits.free_application_cap;
+  async function onMapJob(useMock: boolean) {
+    setError("");
+    if (!jobUrl.trim() && !useMock) {
+      setError("Paste a LinkedIn job URL, or use a sample JD.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const data = await mapJob({
+        url:
+          jobUrl.trim() ||
+          "https://www.linkedin.com/jobs/view/career-fit-mock",
+        profile,
+        mock: useMock ? true : null,
+        locale,
+      });
+      applyMappedJob(
+        data.job,
+        data.insights,
+        data.meta.mock
+          ? "Sample JD (session skipped)"
+          : `Session · ${data.meta.source}`,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      setShowPaste(true);
+      setStatus("Session map failed — paste JD below.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function onParseJob() {
     setError("");
     setBusy(true);
     try {
       const parsed = await parseJob(jobPaste, "paste");
-      setTitle(parsed.title);
-      setCompany(parsed.company);
-      if (parsed.locale_hint) setLocale(parsed.locale_hint);
-      setStatus("Job fields extracted — edit if needed, then Generate");
+      const data = await jobInsights({
+        raw: parsed.description,
+        title: parsed.title,
+        company: parsed.company,
+        profile,
+        locale: parsed.locale_hint || locale,
+        source: "paste",
+      });
+      applyMappedJob(
+        {
+          title: data.job.title,
+          company: data.job.company,
+          description: data.job.description,
+          locale_hint: parsed.locale_hint,
+        },
+        data.insights,
+        "Paste fallback",
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -124,10 +213,8 @@ export default function Craft({
 
   async function onGenerate() {
     setError("");
-    if (tailorBlocked) {
-      setError(
-        `Free limit: ${limits?.free_tailor_per_month} tailored CVs / month. Request Pro to continue.`,
-      );
+    if (!title.trim() && !jobPaste.trim()) {
+      setError("Pick or paste a job first, then generate.");
       return;
     }
     setBusy(true);
@@ -141,10 +228,10 @@ export default function Craft({
           locale,
           raw_paste: jobPaste,
         },
+        angle: insights?.angle,
       });
       setResult(data);
       setTab("markdown");
-      setUsage(bumpTailorCount());
       setStatus(`Angle: ${data.angle}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -154,31 +241,27 @@ export default function Craft({
   }
 
   async function onSavePipeline() {
-    if (!result) return;
+    if (!result && !title) return;
     setError("");
-    if (appCapBlocked) {
-      setError(
-        `Free pipeline cap: ${limits?.free_application_cap} applications. Request Pro for full memory.`,
-      );
-      return;
-    }
     setBusy(true);
     try {
       const bundle = await saveApplicationRemote({
         title,
         company,
-        angle: result.angle,
-        locale: result.locale,
+        angle: result?.angle || insights?.angle || "",
+        locale: result?.locale || locale,
         job_description: jobPaste,
-        markdown: result.markdown,
-        latex: result.latex,
-        company_message: result.company_message,
-        summary: result.summary,
-        proof: result.proof,
+        markdown: result?.markdown || "",
+        latex: result?.latex || "",
+        company_message: result?.company_message || "",
+        summary: result?.summary || "",
+        proof: result?.proof || "",
       });
       upsertApplicationBundle(bundle.application, bundle.artifact);
       setSavePulse(true);
-      setStatus(`Saved to pipeline · ${bundle.application.company || bundle.application.title}`);
+      setStatus(
+        `Saved · ${bundle.application.company || bundle.application.title}`,
+      );
       setTimeout(() => setSavePulse(false), 900);
       onSaved();
     } catch (e) {
@@ -196,12 +279,12 @@ export default function Craft({
         profile,
         job: { title, company, description: jobPaste, locale },
         contacts_text: contactsPaste,
-        angle: result?.angle,
+        angle: result?.angle || insights?.angle,
         locale,
       });
       setContacts(data.contacts);
       setContactsNote(data.note);
-      setStatus(`${data.contacts.length} contact draft(s) · angle ${data.angle}`);
+      setStatus(`${data.contacts.length} contact draft(s)`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -225,13 +308,6 @@ export default function Craft({
     }
   }
 
-  function requestPro() {
-    setUsage(markProRequested());
-    setStatus(
-      "Pro interest saved — thanks. Limits stay until billing ships; clear usage in localStorage to reset while dogfooding.",
-    );
-  }
-
   return (
     <div className={`craft view-enter ${savePulse ? "saved-pulse" : ""}`}>
       <div className="grid two">
@@ -248,13 +324,13 @@ export default function Craft({
             <p className="hint">{profileLabel}</p>
             <div className="row">
               <button type="button" className="btn secondary" onClick={onIntake}>
-                Edit intake
+                Start / jobs
               </button>
               <button
                 type="button"
                 className="btn secondary"
                 onClick={() =>
-                  loadExampleProfile().then((p) => {
+                  loadExampleProfile().then((p: Profile) => {
                     storeProfile(p);
                     onProfile(p, "Example profile loaded");
                   })
@@ -265,39 +341,98 @@ export default function Craft({
             </div>
           </div>
 
-          {(tailorBlocked || appCapBlocked) && (
-            <div className="pro-panel warn">
-              <p>
-                {tailorBlocked
-                  ? `Free tailor limit reached (${limits?.free_tailor_per_month}/mo).`
-                  : `Free pipeline cap (${limits?.free_application_cap} roles).`}
-              </p>
-              <p className="hint">{limits?.pro_blurb}</p>
-              <button type="button" className="btn" onClick={requestPro}>
-                Request Pro (${limits?.pro_price_usd}/mo)
-              </button>
-            </div>
-          )}
-
           <div className="field">
-            <label>Job paste (LinkedIn / Gupy / inHire / anywhere)</label>
-            <textarea
-              className="tall"
-              value={jobPaste}
-              onChange={(e) => setJobPaste(e.target.value)}
-              placeholder="Paste the full job description here…"
+            <label>Job link</label>
+            <p className="hint">
+              Prefer picking a job on Start. Here you can map a jobs/view URL or
+              paste a JD.
+            </p>
+            <input
+              type="url"
+              value={jobUrl}
+              onChange={(e) => setJobUrl(e.target.value)}
+              placeholder="https://www.linkedin.com/jobs/view/…"
             />
-            <div className="row">
+            <div className="row" style={{ marginTop: "0.55rem" }}>
+              <button
+                type="button"
+                className="btn"
+                disabled={
+                  busy || !jobUrl.trim() || jobUrl.includes("/jobs/search")
+                }
+                onClick={() => onMapJob(false)}
+              >
+                {busy ? "Mapping…" : "Map role"}
+              </button>
               <button
                 type="button"
                 className="btn secondary"
-                disabled={busy || !jobPaste.trim()}
-                onClick={onParseJob}
+                disabled={busy}
+                onClick={() => onMapJob(true)}
               >
-                Extract fields
+                Sample JD
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                disabled={busy}
+                onClick={() => setShowPaste((v) => !v)}
+              >
+                {showPaste ? "Hide paste" : "Paste JD"}
               </button>
             </div>
+            {mapMeta && <p className="hint">{mapMeta}</p>}
           </div>
+
+          {showPaste && (
+            <div className="field">
+              <label>Job description</label>
+              <textarea
+                className="tall"
+                value={jobPaste}
+                onChange={(e) => setJobPaste(e.target.value)}
+                placeholder="Paste the full job description here…"
+              />
+              <div className="row">
+                <button
+                  type="button"
+                  className="btn secondary"
+                  disabled={busy || !jobPaste.trim()}
+                  onClick={onParseJob}
+                >
+                  Extract + insights
+                </button>
+              </div>
+            </div>
+          )}
+
+          {insights && (
+            <div className="insights-panel">
+              <h3>Role insights</h3>
+              <p className="angle">
+                angle · {insights.angle}
+                <span className="hint">
+                  {" "}
+                  ({insights.angle_score.toFixed(2)}) — {insights.angle_rationale}
+                </span>
+              </p>
+              <ul>
+                {insights.bullets.map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+              {insights.gaps.length > 0 && (
+                <>
+                  <p className="hint">Real facts only — gaps to fill later:</p>
+                  <ul className="gaps">
+                    {insights.gaps.map((g) => (
+                      <li key={g}>{g}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="field">
             <label>Title</label>
@@ -327,62 +462,106 @@ export default function Craft({
             <button
               type="button"
               className="btn"
-              disabled={busy || !profile || (!title && !jobPaste) || tailorBlocked}
+              disabled={busy || !profile || (!title && !jobPaste)}
               onClick={onGenerate}
             >
               {busy ? "Working…" : "Generate tailored resume"}
             </button>
-            {result && <span className="angle">angle · {result.angle}</span>}
+            {(result || insights) && (
+              <span className="angle">
+                angle · {result?.angle || insights?.angle}
+              </span>
+            )}
           </div>
 
-          {result && (
+          {(result || title) && !seedJob?.saved && (
             <div className="row" style={{ marginTop: "0.75rem" }}>
               <button
                 type="button"
                 className="btn"
-                disabled={busy || appCapBlocked}
+                disabled={busy}
                 onClick={onSavePipeline}
               >
                 Save to pipeline
               </button>
-              <span className="hint">Primary next step — don’t lose this pack.</span>
+              <span className="hint">Keeps this role in Home.</span>
             </div>
           )}
 
-          <div className="field" style={{ marginTop: "1.25rem" }}>
-            <label>Recruiters / decision-makers (paste)</label>
-            <p className="hint">
-              Paste name, title, About. Then log who you actually message.
-            </p>
-            <textarea
-              className="tall"
-              value={contactsPaste}
-              onChange={(e) => setContactsPaste(e.target.value)}
-              placeholder={`Jane Doe\nTechnical Recruiter | Acme\nAbout: jane@acme.com`}
-            />
-            <button
-              type="button"
-              className="btn ghost"
-              disabled={busy || !contactsPaste.trim() || (!title && !jobPaste)}
-              onClick={onRecruiters}
-            >
-              Rank contacts + draft messages
-            </button>
-          </div>
+          {result && seedJob?.saved && (
+            <div className="notice" style={{ marginTop: "0.75rem" }}>
+              <p style={{ marginBottom: "0.65rem" }}>
+                Pack saved. Copy the company message and send it yourself — then
+                check Home for the next move.
+              </p>
+              <div className="row">
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setTab("message");
+                    void navigator.clipboard.writeText(
+                      result.company_message || "",
+                    );
+                    setStatus("Company message copied — send it to a human.");
+                  }}
+                >
+                  Copy message
+                </button>
+                <button type="button" className="btn secondary" onClick={onHome}>
+                  Home
+                </button>
+              </div>
+            </div>
+          )}
+
+          {result && (
+            <div className="field" style={{ marginTop: "1.25rem" }}>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => setShowRecruiters((v) => !v)}
+              >
+                {showRecruiters
+                  ? "Hide recruiter drafts"
+                  : "Optional: paste recruiters"}
+              </button>
+              {showRecruiters && (
+                <>
+                  <p className="hint">
+                    Paste name, title, About. You send — we draft and track.
+                  </p>
+                  <textarea
+                    className="tall"
+                    value={contactsPaste}
+                    onChange={(e) => setContactsPaste(e.target.value)}
+                    placeholder={`Jane Doe\nTechnical Recruiter | Acme\nAbout: jane@acme.com`}
+                  />
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    disabled={
+                      busy || !contactsPaste.trim() || (!title && !jobPaste)
+                    }
+                    onClick={onRecruiters}
+                  >
+                    Rank contacts + draft messages
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {error && <p className="status error">{error}</p>}
           {status && !error && <p className="status ok">{status}</p>}
-          <p className="hint">
-            Free usage: {usage.tailor_count}/
-            {limits?.free_tailor_per_month ?? 3} tailors this month
-          </p>
         </section>
 
         <section className="panel">
           <h2>Outputs</h2>
           {!result && (
             <p className="hint">
-              Generate a resume to see Markdown, LaTeX, and a company message.
+              After you pick a job on Start (or map one here), generate Markdown /
+              LaTeX / company message.
             </p>
           )}
           {result && (
@@ -390,9 +569,9 @@ export default function Craft({
               <div className="tabs">
                 {(
                   [
+                    ["message", "Company msg"],
                     ["markdown", "Resume MD"],
                     ["latex", "Resume LaTeX"],
-                    ["message", "Company msg"],
                   ] as const
                 ).map(([id, label]) => (
                   <button
@@ -406,6 +585,20 @@ export default function Craft({
                 ))}
               </div>
               <div className="row" style={{ marginBottom: "0.65rem" }}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(output);
+                    setStatus(
+                      tab === "message"
+                        ? "Company message copied — send it yourself."
+                        : "Copied.",
+                    );
+                  }}
+                >
+                  {tab === "message" ? "Copy message" : "Copy"}
+                </button>
                 <button
                   type="button"
                   className="btn secondary"
@@ -422,13 +615,15 @@ export default function Craft({
                 >
                   Download
                 </button>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() => navigator.clipboard.writeText(output)}
-                >
-                  Copy
-                </button>
+                {seedJob?.saved && (
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={onHome}
+                  >
+                    Home
+                  </button>
+                )}
               </div>
               <pre className="output">{output}</pre>
             </>
@@ -466,11 +661,6 @@ export default function Craft({
                     >
                       Log as sent
                     </button>
-                    {c.linkedin_url && (
-                      <a href={c.linkedin_url} target="_blank" rel="noreferrer">
-                        Open profile
-                      </a>
-                    )}
                   </div>
                 </article>
               ))}

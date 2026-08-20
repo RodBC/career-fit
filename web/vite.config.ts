@@ -9,6 +9,9 @@ export default defineConfig({
       "/api": {
         target: "http://127.0.0.1:8787",
         changeOrigin: true,
+        // linkedin-session can wait up to ~5 min for login
+        timeout: 320_000,
+        proxyTimeout: 320_000,
       },
     },
   },

@@ -23,9 +23,18 @@ def parse_job_text(raw: str, source: str = "paste") -> ParsedJob:
     title = ""
     company = ""
 
+    # Structured public LinkedIn guest scrape: title\n\ncompany\n\ndesc
+    if source == "public_job_url" and len(lines) >= 2:
+        if len(lines[0]) < 120 and not lines[0].lower().startswith("http"):
+            title = lines[0]
+        if len(lines[1]) < 80 and not lines[1].lower().startswith("http"):
+            company = lines[1]
+
     # Common patterns
     # "Role at Company" on first lines
     for ln in lines[:8]:
+        if title and company:
+            break
         m = re.match(r"^(.{3,90}?)\s+(?:at|@|na)\s+(.{2,60})$", ln, re.I)
         if m and not title:
             title = m.group(1).strip()
@@ -33,6 +42,8 @@ def parse_job_text(raw: str, source: str = "paste") -> ParsedJob:
             break
 
     for ln in lines[:12]:
+        if title and company:
+            break
         low = ln.lower()
         if not title and len(ln) < 120 and not low.startswith("http"):
             if any(

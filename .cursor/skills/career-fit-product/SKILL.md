@@ -32,12 +32,14 @@ Ship only if it improves at least one:
 
 ## Default answers
 
-- LinkedIn auto-scrape? **No** in public core.  
+- LinkedIn **session** map (local Chrome, user-chosen job URL)? **Yes** — yellow primary (Warm Bridge pattern).  
+- LinkedIn **mass/headless** harvest / password-in-API? **No** — red.  
 - Auto-send DMs / auto-post? **No** — draft + track only.  
 - Full suggestion engine before tracker? **No** — Phase B before C.  
-- More job boards? **Paste adapters first**; green/yellow only per `docs/sources.yaml`.  
+- More job boards? Session URL + paste; green/yellow only per `docs/sources.yaml`.  
 - Pro price? **$29/mo** working (soft gates in UI; Stripe later).  
-- Next craft upgrade? Per-angle tagging + JD normalizers after Home feels sticky.
+- Next craft upgrade? Live Selenium harden + inline email at outreach; per-angle tagging after dogfood.  
+- Onboarding form dump? **No** — LinkedIn URL first (`docs/JOURNEY.md`).
 
 Read `docs/PRODUCT.md` + `docs/ECOSYSTEM.md` + `docs/context/CURRENT.md` before changing tiers or positioning.
 Use skill `career-fit-tracker` for pipeline/Home/Free limits.
