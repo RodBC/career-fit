@@ -23,12 +23,42 @@ _JOB_SELECTORS = [
     "main",
 ]
 
+_JOB_TITLE_SELECTORS = [
+    ".job-details-jobs-unified-top-card__job-title h1",
+    ".job-details-jobs-unified-top-card__job-title",
+    ".top-card-layout__title",
+    ".topcard__title",
+    "h1",
+]
+
+_JOB_COMPANY_SELECTORS = [
+    ".job-details-jobs-unified-top-card__company-name",
+    ".jobs-unified-top-card__company-name",
+    ".topcard__org-name-link",
+]
+
 
 def _pause(cfg: SessionConfig) -> None:
     time.sleep(max(0.5, cfg.nav_pause_sec))
 
 
+def _first_text(page: Any, selectors: list[str], *, max_len: int) -> str:
+    for sel in selectors:
+        try:
+            loc = page.locator(sel)
+            if not loc.count():
+                continue
+            text = (loc.nth(0).inner_text(timeout=2000) or "").strip()
+            if text:
+                return text.splitlines()[0][:max_len].strip()
+        except Exception:  # noqa: BLE001
+            continue
+    return ""
+
+
 def _page_job_text(page: Any) -> str:
+    title = _first_text(page, _JOB_TITLE_SELECTORS, max_len=120)
+    company = _first_text(page, _JOB_COMPANY_SELECTORS, max_len=80)
     chunks: list[str] = []
     for sel in _JOB_SELECTORS:
         try:
@@ -41,11 +71,20 @@ def _page_job_text(page: Any) -> str:
         except Exception:  # noqa: BLE001
             continue
     if chunks:
-        return "\n\n".join(chunks)
-    try:
-        return (page.locator("body").inner_text(timeout=3000) or "").strip()
-    except Exception:  # noqa: BLE001
-        return ""
+        body = "\n\n".join(chunks)
+    else:
+        try:
+            body = (page.locator("body").inner_text(timeout=3000) or "").strip()
+        except Exception:  # noqa: BLE001
+            body = ""
+
+    # Preserve observed title/company ahead of the JD so the shared parser does
+    # not have to guess them from a description-only selector.
+    if title and company:
+        return f"{title}\n\n{company}\n\n{body}".strip()
+    if title:
+        return f"{title}\n\n{body}".strip()
+    return body
 
 
 def _normalize_job_view_url(href: str) -> str:

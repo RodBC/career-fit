@@ -436,6 +436,13 @@ textarea.tall {
   margin-bottom: 1.5rem;
 }
 
+.shell-brand-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
 .brand-link {
   border: none;
   background: transparent;
@@ -450,6 +457,24 @@ textarea.tall {
   font-weight: 650;
   letter-spacing: -0.03em;
   color: var(--ink);
+}
+
+.reset-workspace {
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--line));
+  background: transparent;
+  color: var(--danger);
+  padding: 0.32rem 0.65rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 650;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.reset-workspace:hover {
+  background: var(--danger);
+  color: white;
+  transform: translateY(-1px);
 }
 
 .shell-nav {

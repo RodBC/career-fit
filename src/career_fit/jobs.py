@@ -13,6 +13,39 @@ class ParsedJob:
     locale_hint: str | None = None
 
 
+_STRUCTURED_URL_SOURCES = {
+    "public_job_url",
+    "linkedin_camoufox_guest",
+    "linkedin_camoufox",
+}
+
+_SECTION_HEADINGS = {
+    "about the job",
+    "about the role",
+    "job description",
+    "responsibilities",
+    "requirements",
+    "qualifications",
+    "sobre a vaga",
+    "descrição da vaga",
+    "responsabilidades",
+    "requisitos",
+}
+
+
+def is_complete_job(parsed: ParsedJob, *, min_description_chars: int = 80) -> bool:
+    """A mapped URL is usable only when its core facts were actually observed."""
+    title = parsed.title.strip()
+    company = parsed.company.strip()
+    description = parsed.description.strip()
+    return bool(
+        title
+        and title != "Untitled role"
+        and company
+        and len(description) >= min_description_chars
+    )
+
+
 def parse_job_text(raw: str, source: str = "paste") -> ParsedJob:
     """
     Normalize pasted JD text from LinkedIn / Gupy / inHire / anywhere.
@@ -23,12 +56,19 @@ def parse_job_text(raw: str, source: str = "paste") -> ParsedJob:
     title = ""
     company = ""
 
-    # Structured public LinkedIn guest scrape: title\n\ncompany\n\ndesc
-    if source == "public_job_url" and len(lines) >= 2:
+    # Structured URL fetches commonly return: title\n\ncompany\n\ndescription.
+    if source in _STRUCTURED_URL_SOURCES and len(lines) >= 2:
         if len(lines[0]) < 120 and not lines[0].lower().startswith("http"):
             title = lines[0]
-        if len(lines[1]) < 80 and not lines[1].lower().startswith("http"):
-            company = lines[1]
+        company_candidate = lines[1]
+        candidate_low = company_candidate.lower().rstrip(":")
+        if (
+            1 < len(company_candidate) < 80
+            and len(company_candidate.split()) <= 10
+            and not candidate_low.startswith("http")
+            and candidate_low not in _SECTION_HEADINGS
+        ):
+            company = company_candidate
 
     # Common patterns
     # "Role at Company" on first lines

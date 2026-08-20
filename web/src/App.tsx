@@ -82,6 +82,10 @@ export default function App() {
   }
 
   function eraseAndRestart() {
+    const confirmed = window.confirm(
+      "Clear all locally saved Career Fit data?\n\nThis removes your profile, applications, generated CVs, outreach history, and usage counters. This cannot be undone.",
+    );
+    if (!confirmed) return;
     clearLocalWorkspace();
     setProfile(null);
     setProfileLabel("No profile loaded");
@@ -94,13 +98,23 @@ export default function App() {
   return (
     <div className="app">
       <header className="shell-top">
-        <button
-          type="button"
-          className="brand-link"
-          onClick={() => (profile ? setView("home") : setView("intake"))}
-        >
-          <span className="brand-mark">Career Fit</span>
-        </button>
+        <div className="shell-brand-actions">
+          <button
+            type="button"
+            className="brand-link"
+            onClick={() => (profile ? setView("home") : setView("intake"))}
+          >
+            <span className="brand-mark">Career Fit</span>
+          </button>
+          <button
+            type="button"
+            className="reset-workspace"
+            onClick={eraseAndRestart}
+            title="Delete the local profile, applications, generated CVs, outreach, and usage history"
+          >
+            Clear all data
+          </button>
+        </div>
         <nav className="shell-nav" aria-label="Primary">
           <button
             type="button"
@@ -124,14 +138,6 @@ export default function App() {
             onClick={() => goCraft()}
           >
             Craft
-          </button>
-          <button
-            type="button"
-            className="nav-pill"
-            onClick={eraseAndRestart}
-            title="Clear localStorage profile and restart"
-          >
-            Fresh
           </button>
         </nav>
       </header>
@@ -177,8 +183,8 @@ export default function App() {
       )}
 
       <p className="footer-note">
-        You send messages manually. We draft and track. Fresh start:{" "}
-        <a href="/?fresh=1">/?fresh=1</a>
+        You send messages manually. We draft and track. Workspace data stays in
+        this browser.
       </p>
     </div>
   );

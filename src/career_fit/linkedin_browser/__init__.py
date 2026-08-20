@@ -10,7 +10,7 @@ import os
 import re
 from typing import Any
 
-from ..jobs import ParsedJob, parse_job_text
+from ..jobs import ParsedJob, is_complete_job, parse_job_text
 from .config import SessionConfig, load_session_config, session_ready_report
 from .errors import BrowserJobError, SeleniumJobError
 from .mock import mock_job_text
@@ -125,6 +125,8 @@ def map_job_url(
             },
         }
 
+    found_incomplete = False
+
     # L1: Public HTTP — no LinkedIn login
     try:
         from .public_fetch import fetch_public_job_text
@@ -134,7 +136,7 @@ def map_job_url(
         public_raw = ""
     if public_raw and len(public_raw.strip()) >= 80:
         parsed = parse_job_text(public_raw, source="public_job_url")
-        if (parsed.description and len(parsed.description) >= 40) or parsed.title:
+        if is_complete_job(parsed):
             return {
                 "parsed": parsed,
                 "meta": {
@@ -143,6 +145,7 @@ def map_job_url(
                     "mock": False,
                 },
             }
+        found_incomplete = True
 
     # L2: Guest Camoufox
     try:
@@ -151,14 +154,16 @@ def map_job_url(
         raw = fetch_job_page_text(job_url, cfg, guest=True)
         if raw and len(raw.strip()) >= 40:
             parsed = parse_job_text(raw, source="linkedin_camoufox_guest")
-            return {
-                "parsed": parsed,
-                "meta": {
-                    "source": "linkedin_camoufox_guest",
-                    "url": job_url,
-                    "mock": False,
-                },
-            }
+            if is_complete_job(parsed):
+                return {
+                    "parsed": parsed,
+                    "meta": {
+                        "source": "linkedin_camoufox_guest",
+                        "url": job_url,
+                        "mock": False,
+                    },
+                }
+            found_incomplete = True
     except BrowserJobError:
         pass
     except Exception:  # noqa: BLE001
@@ -172,18 +177,28 @@ def map_job_url(
             raw = fetch_job_page_text(job_url, cfg, guest=False)
             if raw and len(raw.strip()) >= 40:
                 parsed = parse_job_text(raw, source="linkedin_camoufox")
-                return {
-                    "parsed": parsed,
-                    "meta": {
-                        "source": "linkedin_camoufox",
-                        "url": job_url,
-                        "mock": False,
-                    },
-                }
+                if is_complete_job(parsed):
+                    return {
+                        "parsed": parsed,
+                        "meta": {
+                            "source": "linkedin_camoufox",
+                            "url": job_url,
+                            "mock": False,
+                        },
+                    }
+                found_incomplete = True
         except BrowserJobError:
             pass
         except Exception:  # noqa: BLE001
             pass
+
+    if found_incomplete:
+        raise BrowserJobError(
+            "The page was reachable, but Career Fit could not verify the title, "
+            "company, and full job description. Try a public careers / Greenhouse / "
+            "Lever link, or a publicly viewable LinkedIn jobs/view URL.",
+            status=422,
+        )
 
     raise BrowserJobError(
         "Could not read that job URL (login wall or empty page). "

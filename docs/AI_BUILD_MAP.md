@@ -86,7 +86,7 @@ Private corpus (not in this repo): `/home/decastro/studies/curriculumn` — LaTe
 | `tailor.py` | Assemble resume from tagged profile | `tailor` | Deterministic; picks locale/summary/skills/bullets by angle |
 | `render.py` | Emit markdown + LaTeX | `render_markdown`, `render_latex` | Presentation only |
 | `outreach.py` | Company-level short message | `build_outreach` | One generic HM/company draft from proof |
-| `jobs.py` | JD paste → fields | `parse_job_text`, `ParsedJob` | Normalize LinkedIn/Gupy/inHire **text** without fetch |
+| `jobs.py` | JD paste → fields + mapped-job completeness | `parse_job_text`, `is_complete_job`, `ParsedJob` | Normalize LinkedIn/Gupy/inHire **text** without fetch; never accept a URL result missing title/company/JD |
 | `linkedin_browser/` | Job URL → JD via Camoufox (guest → warm → ops burner) | `map_job_url`, `fetch_*`, `bootstrap_burner_session` | Warm Bridge yellow; never invent JD; no end-user passwords |
 | `linkedin_selenium/` | Shim re-export of `linkedin_browser` | same public API | Back-compat only |
 | `suggest_roles.py` | Role cards from path → LinkedIn search URLs | `suggest_roles_from_profile`, `linkedin_jobs_search` | Yes/no targeting without inventing jobs |
@@ -249,6 +249,7 @@ If you only polish copy inside an existing function, skip the ledger — still u
 ```bash
 career-fit eval              # angle regressions
 career-fit map-job --url 'https://www.linkedin.com/jobs/view/1' --mock
+python -m pytest -q          # parser + source fallback regressions
 career-fit dev               # API :8787 + UI :5173 together
 # happy path: Use mock JD → Role insights → Generate → Save to pipeline
 ```
