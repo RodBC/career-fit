@@ -5,7 +5,6 @@ data/chrome_profile/
 data/camoufox_profile/
 data/secrets/
 data/out/
-data/out/
 *.pdf
 
 # Local Chrome for Testing (legacy; Camoufox replaces this)
