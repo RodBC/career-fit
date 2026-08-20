@@ -24,7 +24,7 @@ History is short and intentional. Treat each commit as a **layer**, not a random
 | *(pending)* | `feat: job URL session map + role insights` | **Warm Bridge-aligned intake** | Yellow LinkedIn session primary for job URLs; Craft URL-first; insights before tailor; paste fallback. |
 | *(pending)* | `feat: journey sample pack + dogfood harden` | **Minimum-input loop** | Live→mock Start CTA; roles → `/api/sample-pack` into Craft; session yaml + Fresh always on. |
 | *(pending)* | `feat: in-product LinkedIn session unlock + wedge aha` | **Sticky real-data wedge** | Start session banner + `/api/linkedin-session`; paste-first when empty; Craft message-first + Today send outreach. |
-| *(pending)* | `feat: Camoufox LinkedIn browser + burner OTP` | **Camoufox stack** | Replace Selenium; guest-first + XHR intercept; ops burner + Gmail IMAP App Password OTP (warm-bridge-aligned); `linkedin_browser` owns ingest. |
+| `a10c619` | `feat: Camoufox LinkedIn browser + burner OTP` | **Camoufox stack** | Replace Selenium; guest-first + XHR intercept; ops burner + Gmail IMAP App Password OTP (warm-bridge-aligned); `linkedin_browser` owns ingest. |
 
 **Invariant across all layers:** user-chosen URLs via **session** (yellow) or paste/CSV · deterministic tailor first · user sends messages · no red-tier mass harvest.
 
